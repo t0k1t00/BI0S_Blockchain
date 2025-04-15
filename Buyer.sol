@@ -24,3 +24,6 @@ contract Buyer {
         IShop(_shopAddr).buy();
     }
 }
+
+
+//instance address =0x2868b5Cee4517bdb9eFa023A90f0CdCF1008b3Ac
