@@ -9,7 +9,8 @@ interface ECLocker {
         address controller
     ) external;
 }
-
+//EC_locker address = 0x5c752bb3236b1cbcab285e75919a922aa3ab2723
+//topic 1 of the isnatnce address is the locker address and i used that as the address to deploy this contract and then executed it and use the run fn and it gave me the success status when i checked in etherscan and then i submitted the level and got the completion msg
 contract Solution {
     ECLocker public locker;
 
