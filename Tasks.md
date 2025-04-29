@@ -208,3 +208,42 @@ await contract.owner()
 
 ## Level completed
 ![Level Complete Output](assets/Telephone.png)
+
+
+# Ethernaut Level 5: Token
+
+## Strategy
+
+- **Vulnerability**: The `transfer` function in the contract does not safely check for underflows. It subtracts the transfer amount from the sender’s balance before performing the check, and since the Solidity version is ^0.6.0 (before built-in overflow checks), this leads to an integer underflow vulnerability.
+- **Exploit**: By trying to transfer more tokens than I actually had (21 tokens when I only had 20), the subtraction underflows and sets my balance to a very large number, allowing me to pass the level.
+
+---
+
+## Commands Used
+
+### 1. Get the contract instance
+```
+let instance = await contract;
+```
+To interact with the deployed Token contract instance.
+
+---
+
+### 2. Called the `transfer` function with more than 20 tokens
+```
+await instance.transfer("0x0000000000000000000000000000000000000001", 21);
+```
+This triggers the underflow vulnerability and results in a huge balance increase for the player.
+
+---
+
+### 3. Checked the player’s balance
+```
+(await instance.balanceOf(player)).toString();
+```
+To verify that my token balance is now much larger than the original 20 tokens.
+
+---
+
+## Level completed
+![Level Complete Output](assets/Token.png)
