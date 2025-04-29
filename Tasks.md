@@ -1,6 +1,6 @@
 ## Ethernaut Level 0: Hello Ethernaut
 
-## Commands I Used
+## Commands Used
 
 ### 1. Called info() to get the initial clue
 ```
@@ -59,7 +59,7 @@ Also, the initial owner starts with `1000 ether` in contributions, so our total 
 
 ---
 
-## Commands I Used
+## Commands Used
 
 ### 1. Contributed a small amount to initialize `contributions[msg.sender] > 0`
 ```
@@ -122,3 +122,34 @@ To check that I successfully became the owner after calling `Fal1out()`.
 ## Level completed
 
 ![Level Complete Output](assets/Fallout.png)
+
+
+# Ethernaut Level: CoinFlip Hack
+
+## Strategy
+
+In this challenge, the `CoinFlip` contract simulates a coin flip by using the previous block's hash, which is not truly random. This hash can be predicted using the `blockhash()` function, making it possible to determine the outcome of the coin flip in advance.
+
+---
+
+## Commands Used
+
+### 1. Get the contract instance address
+```
+await contract.address
+```
+This command was used to get the address of the deployed `CoinFlip` contract
+
+---
+
+### 2. Query the `consecutiveWins` after each successful guess
+```
+await contract.consecutiveWins()
+```
+I used this command 10 times to check the `consecutiveWins` value after each flip. Each time the guess was correct, the value increased, and I confirmed that the counter reached 10.
+
+---
+
+## Level completed
+![Level Complete Output](assets/Coin_Flip.png)
+![2](assets/Coin_Flip(1).png)
