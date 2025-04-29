@@ -1,4 +1,4 @@
-## Ethernaut Level0: Hello Ethernaut
+## Ethernaut Level 0: Hello Ethernaut
 
 ## Commands I Used
 
