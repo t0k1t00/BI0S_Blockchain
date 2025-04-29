@@ -87,6 +87,6 @@ Now that I’m the owner, I can withdraw the contract’s balance and fulfill th
 
 ---
 
-### 4. Submitted the instance
+### 4. Level completed
 
 ![Level Complete Output](assets/Fallback.png)
