@@ -207,4 +207,4 @@ await contract.owner()
 ```
 
 ## Level completed
-![Level Complete Output](assets/Telphone.png)
+![Level Complete Output](assets/Telephone.png)
