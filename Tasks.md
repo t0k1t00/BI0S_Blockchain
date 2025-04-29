@@ -42,7 +42,7 @@ Transaction successful
 ### 5. Clicked "Submit Instance"  
 Level completed 
 
-## Output Proof##
+## Output Proof
 ![Level Complete Output](assets/Hello_Ethernaut.png)
 ![2](assets/Hello_Ethernaut(1).png)
 
