@@ -124,7 +124,7 @@ To check that I successfully became the owner after calling `Fal1out()`.
 ![Level Complete Output](assets/Fallout.png)
 
 
-# Ethernaut Level: CoinFlip Hack
+# Ethernaut Level: Coin Flip
 
 ## Strategy
 
