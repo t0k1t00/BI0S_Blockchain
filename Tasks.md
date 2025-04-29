@@ -124,7 +124,7 @@ To check that I successfully became the owner after calling `Fal1out()`.
 ![Level Complete Output](assets/Fallout.png)
 
 
-# Ethernaut Level: Coin Flip
+# Ethernaut Level 3: Coin Flip
 
 ## Strategy
 
@@ -153,3 +153,58 @@ I used this command 10 times to check the `consecutiveWins` value after each fli
 ## Level completed
 ![Level Complete Output](assets/Coin_Flip.png)
 ![2](assets/Coin_Flip(1).png)
+
+
+# Ethernaut Level 4: Telephone
+
+## Strategy
+
+In this challenge, the `Telephone` contract has a function `changeOwner()` that allows the owner to be changed under certain conditions. The key condition here is that the contract checks whether the transaction origin (`tx.origin`) is different from the caller's address (`msg.sender`). This check is the key vulnerability, as it allows an attacker to use an intermediate contract to manipulate the `tx.origin` value and bypass the owner check.
+
+### Steps:
+1. **Understanding the Vulnerability**: The `tx.origin` is the address that initiated the transaction, and it will be different from the contract address when the contract is called by another contract. This condition allows the ownership to be transferred by a contract calling the `changeOwner()` function.
+2. **Exploiting the Vulnerability**: I wrote an intermediate contract that calls the `changeOwner()` function of the target `Telephone` contract, passing the contract’s address (`msg.sender`) to satisfy the condition and change the owner of the `Telephone` contract.
+
+---
+
+## Commands Used
+
+### 1. Creating an Interface to Interact with the `Telephone` Contract
+```
+interface ITelephone {
+  function changeOwner(address _owner) external;
+}
+```
+I created an interface (`ITelephone`) to interact with the `Telephone` contract. This allows me to call the `changeOwner()` function on the contract from another contract.
+
+---
+
+### 2. Intermediate Contract to Exploit the Vulnerability
+```
+contract IntermediateContract {
+  function changeOwner(address _addr) public {
+    ITelephone(_addr).changeOwner(msg.sender);
+  }
+}
+```
+This contract acts as an intermediary. It calls the `changeOwner()` function of the target `Telephone` contract, passing the caller's address (`msg.sender`) as the new owner. Since the check `tx.origin != msg.sender` is bypassed, the ownership is transferred successfully.
+
+---
+
+### Explanation of the Exploit:
+- The `Telephone` contract uses `tx.origin` to restrict who can change the owner. `tx.origin` refers to the original address that initiated the transaction, and in this case, it checks if the transaction origin is not the same as the caller.
+- By using an intermediate contract, I bypassed this check because `msg.sender` (the contract address) is different from `tx.origin` (my address). The intermediate contract successfully called the `changeOwner()` function, transferring the ownership of the `Telephone` contract to my address.
+
+### 3. Executing in Remix IDE
+After deploying both the `Telephone` contract and the `IntermediateContract` on Remix IDE, I called the `changeOwner()` function on the intermediate contract to transfer ownership of the `Telephone` contract to my address.
+
+---
+
+### 4. **Query the ownership to confirm the change:**
+
+```
+await contract.owner()
+```
+
+## Level completed
+![Level Complete Output](assets/Telphone.png)
