@@ -47,8 +47,6 @@ Level completed
 ![2](assets/Hello_Ethernaut(1).png)
 
 
-
-
 # Ethernaut Level 1: Fallback
 
 ##  Strategy
@@ -90,3 +88,37 @@ Now that I’m the owner, I can withdraw the contract’s balance and fulfill th
 ### 4. Level completed
 
 ![Level Complete Output](assets/Fallback.png)
+
+
+# Ethernaut Level 2: Fallout
+
+## Strategy
+
+- **Vulnerability**: The constructor in this contract is incorrectly named `Fal1out`. In Solidity versions prior to 0.7.0, the constructor should match the contract's name.
+- **Exploit**: Since `Fal1out()` is a public function , anyone can call it. By calling `Fal1out()`, I was able to set myself as the contract's owner.
+
+---
+
+## Commands Used
+
+### 1. Called the misnamed constructor to claim ownership
+```
+await contract.Fal1out()
+```
+This allowed me to set myself as the owner of the contract, as it was not treated as a constructor but a regular public function.
+
+---
+
+### 2. Verified ownership
+```
+await contract.owner()
+```
+I got my address as the output, confirming that I am now the owner of the contract
+
+To check that I successfully became the owner after calling `Fal1out()`.
+
+---
+
+## Level completed
+
+![Level Complete Output](assets/Fallout.png)
