@@ -711,7 +711,7 @@ This confirmed that the level was successfully completed.
 ![Level Complete Output](assets/Privacy.png)
 
 
-# Ethernaut Level 4: Gatekeeper One
+# Ethernaut Level 14: Gatekeeper One
 
 ## Strategy
 
