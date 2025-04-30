@@ -660,3 +660,52 @@ This confirmed that the Elevator believed it had reached the top.
 
 ## Level Completed
 ![Level Complete Output](assets/Elevator.png)
+
+# Ethernaut Level 13: Privacy
+
+## Strategy
+
+- **Vulnerability**: Even though the `data` array is marked `private`, Solidity's `private` keyword only restricts access from other contracts—not from external users. Storage slots on the Ethereum blockchain are publicly accessible.
+- **Exploit**: The third element of the private `bytes32[3] data` array (i.e., `data[2]`) is stored in storage slot `5`. By reading this slot and slicing the first 16 bytes (`bytes16`), I was able to extract the key used in the `unlock()` function.
+
+---
+
+## Commands Used
+
+### 1. Read the value in storage slot 5
+```
+await web3.eth.getStorageAt(contract.address, 5)
+```
+`data[2]` is stored in slot 5. I used this to retrieve the 32-byte value that contains the unlock key.
+
+---
+
+### 2. Extract the unlock key from the retrieved bytes32
+```
+let full = '0xe29b4ed9fbfba303b84c498c7a45d399f864637ae28408665a60ce4592daf628';
+let key = '0x' + full.slice(2, 34);
+```
+I took the first 16 bytes from the `bytes32` value (i.e., 32 hex characters) to form the `bytes16` key required by the `unlock()` function.
+
+---
+
+### 3. Unlock the contract
+```
+await contract.unlock(key);
+```
+This call triggered the `unlock()` function and passed the correct key, changing `locked` to `false`.
+
+---
+
+### 4. Confirm that the contract was unlocked
+```
+await contract.locked();
+```
+**Output**: `false`
+
+This confirmed that the level was successfully completed.
+
+---
+
+## Level Completed
+![Level Complete Output](assets/Privacy.png)
