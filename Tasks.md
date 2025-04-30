@@ -576,6 +576,6 @@ Once the balance reached `0`, I confirmed the attack was successful.
 ---
 
 ## Level Completed
-![Level Complete Output](assets/Re-entrancy.png)
+![Level Complete Output](assets/Re-entracy.png)
 ![Level Complete Output](assets/Re-entrancy(1).png)
 
