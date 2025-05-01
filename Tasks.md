@@ -2119,5 +2119,5 @@ contract Solution {
 ---
 
 ### Level Completed
-![Level Complete Output](assets/Impersonator.png)
-![2](assets/Impersonatorscan.png)
+![Level Complete Output](assets/impersonator.png)
+![2](assets/impersonatorscan.png)
