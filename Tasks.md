@@ -1377,7 +1377,7 @@ await contract.isSold(); // Output: true
 ![Level Complete Output](assets/shop.png)
 
 
-## Ethernaut Level 22: Dex
+# Ethernaut Level 22: Dex
 
 ### Strategy
 The Dex contract determines token swap prices based on a formula involving token reserves. However, due to **Solidity's integer division**, each swap introduces a **small imbalance** favoring the player. By repeatedly swapping tokens back and forth, we can exploit this **price manipulation vulnerability** to slowly increase our token balance relative to the Dex’s and eventually **drain all of one token**.
