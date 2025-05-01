@@ -1024,3 +1024,93 @@ After calling `destroy()`, check your wallet balance or ensure the contract no l
 
 ## Level Completed
 ![Level Complete Output](assets/level17-recovery-success.png)
+
+
+# Ethernaut Level 18: MagicNumber
+
+## Strategy
+
+- **Vulnerability**: The `MagicNum` contract allows setting an external contract (`solver`) that returns a hardcoded `uint256` value. The catch is the Solver contract must be at most 10 EVM opcodes in size.
+- **Exploit**: 
+  - Write raw bytecode directly instead of using Solidity (which produces too much overhead).
+  - The runtime code simply returns the value `42` (0x2a).
+  - Construct init code manually to deploy the runtime code using a contract creation transaction.
+
+---
+
+## Opcode Breakdown
+
+### Runtime Bytecode (10 bytes)
+This is the actual logic that gets executed when the `solver` contract is called.
+
+| Opcode | Meaning                        |
+|--------|--------------------------------|
+| 602a   | PUSH1 0x2a (value 42)          |
+| 6050   | PUSH1 0x50 (mem pos 0x50)      |
+| 52     | MSTORE                         |
+| 6020   | PUSH1 0x20 (length = 32 bytes) |
+| 6050   | PUSH1 0x50 (same mem pos)      |
+| f3     | RETURN                         |
+
+Final Runtime: `602a60505260206050f3` (10 bytes)
+
+---
+
+### Init Code (Setup code)
+This is the code run during deployment to install the runtime code above in the new contract.
+
+| Opcode | Meaning                                  |
+|--------|------------------------------------------|
+| 600a   | PUSH1 0x0a (size of runtime)             |
+| 600c   | PUSH1 0x0c (offset to runtime code)      |
+| 6000   | PUSH1 0x00 (dest in memory)              |
+| 39     | CODECOPY                                 |
+| 600a   | PUSH1 0x0a (size of runtime)             |
+| 6000   | PUSH1 0x00 (mem pos of runtime code)     |
+| f3     | RETURN                                   |
+
+Final Init Code: `600a600c600039600a6000f3` (12 bytes)
+
+---
+
+### Final Bytecode (22 bytes total)
+
+```
+600a600c600039600a6000f3602a60505260206050f3
+```
+
+### 1. Deploy Contract from Raw Bytecode
+
+Open the browser console on the Ethernaut level page and paste:
+
+```
+// This is the raw bytecode of a minimal contract that returns 42 (0x2a) when called.
+const bytecode = "0x600a600c600039600a6000f3602a60505260206050f3";
+
+// Sends a transaction to deploy the contract with that bytecode.
+// `player` is your Ethereum address. The contract is deployed by sending this bytecode with no to-address.
+const tx = await web3.eth.sendTransaction({ from: player, data: bytecode });
+
+// The deployed contract's address is stored here.
+// We'll use it to register this contract as the solver.
+const solverAddr = tx.contractAddress;
+
+// Sets the deployed contract as the solver in the MagicNum contract.
+await contract.setSolver(solverAddr);
+```
+
+The `MagicNum` level requires setting a contract that returns the value `42` using fewer than 10 EVM opcodes. This bytecode accomplishes that efficiently without using Solidity.
+
+---
+
+### 2. Set the Solver Address in MagicNum
+
+```
+await contract.setSolver(solverAddr);
+```
+- This line explicitly sets the address of the deployed contract (which returns 42) as the `solver` expected by `MagicNum`.
+
+---
+
+## Level Completed
+![Level Complete Output](assets/magicnumber.png)
