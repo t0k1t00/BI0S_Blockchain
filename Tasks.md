@@ -1430,7 +1430,7 @@ Successfully drained all of `token1` from the Dex by abusing the flawed swap pri
 ![Level Complete Output](assets/Dex.png)
 
 
-## Ethernaut Level: Dex Two 
+## Ethernaut Level 23: Dex Two 
 
 ### Strategy
 
@@ -1538,7 +1538,7 @@ Verify:
 
 ---
 
-### 🔢 Final Balances
+### Final Balances
 
 |         | Dex Token1 | Dex Token2 | Dex EVL | Player Token1 | Player Token2 | Player EVL |
 |---------|------------|------------|---------|----------------|----------------|-------------|
