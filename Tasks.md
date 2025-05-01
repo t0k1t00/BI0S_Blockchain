@@ -1670,7 +1670,7 @@ At this point, the player is the **admin** of the proxy, and they can control th
 ![2](assets/puzzlewallet2.png)
 
 
-# Ethernaut Level 24: Good Samaritan
+# Ethernaut Level 27: Good Samaritan
 
 ### Strategy
 
@@ -1764,7 +1764,7 @@ This will:
 ![Level Complete Output](assets/goodsamaritan.png)
 
 
-# Ethernaut Level 25: Gatekeeper Three
+# Ethernaut Level 28: Gatekeeper Three
 
 ### Strategy Overview
 
