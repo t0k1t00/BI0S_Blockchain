@@ -5,10 +5,8 @@
 ### 1. Called info() to get the initial clue
 ```js
 await contract.info()
+//You will find what you need in info1().
 ```
-**Output:**  
-`"You will find what you need in info1()."`
-
 This was the first hint given in the level.
 
 ---
