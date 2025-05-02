@@ -775,7 +775,7 @@ The value returned is the wallet address, so we've have successfully passed all 
      ```
      So, `_gateKey = keccak256(msg.sender) ^ max(uint64)`.
 
-- **Exploit**: I deployed a contract that:
+- **Exploit**: Deployed a contract that:
   - Calculates the correct `_gateKey` using its own address and XOR,
   - Calls `enter()` from the constructor to ensure `extcodesize == 0`,
   - Uses itself (a contract) to bypass `msg.sender != tx.origin`.
@@ -813,15 +813,15 @@ This contract satisfies all three gate conditions when deployed.
 ```js
 await contract.entrant()
 ```
-If it returns my wallet address, I successfully passed all gates and completed the level.
+If it returns the wallet address, we've successfully passed all gates and completed the level.
 
 ---
 
-## Level Completed
+### Level Completed
 ![Level Complete Output](assets/GateKeeper2.png)
 
 
-# Ethernaut Level 6: NaughtCoin
+# Ethernaut Level 16: NaughtCoin
 
 ## Strategy
 
@@ -865,7 +865,7 @@ If the balance is `0`, the level is successfully completed.
 
 ---
 
-## Level Completed
+### Level Completed
 ![Level Complete Output](assets/naughtcoin.png)
 
 
@@ -917,10 +917,6 @@ This contract mimics the storage layout of `Preservation` and uses `delegatecall
 
 ### 2. Call `attack()` with the target `Preservation` contract address
 
-```solidity
-hack.attack("0xPreservationContractAddress")
-```
-
 Executes the two-step overwrite of `timeZone1Library` and then `owner`.
 
 ---
@@ -929,14 +925,12 @@ Executes the two-step overwrite of `timeZone1Library` and then `owner`.
 
 ```js
 await contract.owner()
+//Output: Your wallet address
 ```
-
-**Expected Output**:Your wallet address, proving the hack was successful.
-
 ---
 
 ## Level Completed
-![Level Complete Output](assets/level16-preservation-success.png)
+![Level Complete Output](assets/preservation.png)
 
 
 # Ethernaut Level 17: Recovery
@@ -976,10 +970,6 @@ This contract calculates the lost token contract address using Ethereum's `CREAT
 ---
 
 ### 2. Call `recover()` with the address of the `Recovery` contract
-
-```solidity
-dev.recover("0xRecoveryContractAddress")
-```
 
 Get the address of the `SimpleToken` that was deployed via the `Recovery` contract.
 
