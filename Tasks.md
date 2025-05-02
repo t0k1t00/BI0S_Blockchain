@@ -33,13 +33,10 @@ This is the password needed for authentication.
 ```js
 await contract.authenticate(await contract.password())
 ```
-**Output:**  
-Transaction successful
 
 ### 5. Clicked "Submit Instance"  
-Level completed 
 
-## Output Proof
+### Level Completed
 ![Level Complete Output](assets/Hello_Ethernaut.png)
 ![2](assets/Hello_Ethernaut(1).png)
 
