@@ -22,9 +22,8 @@ To check what functions are available in the contract. I noticed a password() fu
 ### 3. Retrieved the password
 ```js
 await contract.password()
+//Output: "ethernaut0"
 ```
-**Output:**  
-`"ethernaut0"`
 
 This is the password needed for authentication.
 
