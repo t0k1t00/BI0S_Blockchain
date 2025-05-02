@@ -418,10 +418,9 @@ await contract.locked();
 ### 1. Checked the current balance of the King contract
 ```js
 (await web3.eth.getBalance("0x72DF418D0D0F0A30625aB7F6cCE70eA7218b2168")).toString()
+//Output: "1000000000000000"
 ```
 I used this command to find the current `prize` amount, so I could send a higher amount and become the new king.
-
-**Output**: `"1000000000000000"` (1,000,000,000,000,000 wei)
 
 ---
 
@@ -447,7 +446,7 @@ contract KingAttack {
 
 **Deployment Parameters**:
 - Target address: the `King` contract instance address.
-- Value sent: `1,100,000,000,000,000 wei` (more than the current prize).
+- Value sent: `1100000000000000 wei` (more than the current prize).
 
 **Reason**:  
 I used the constructor to immediately send Ether to the King contract and claim the throne. The `receive()` function reverted any further Ether transfers, preventing anyone — including the level itself — from dethroning my contract.
@@ -457,15 +456,13 @@ I used the constructor to immediately send Ether to the King contract and claim 
 ### 3. Verified kingship
 ```js
 await contract._king();
+//Output: Address of the `KingAttack` contract
 ```
-
 I used this to confirm that my `KingAttack` contract had become the new king.
-
-**Output**: Address of the `KingAttack` contract
 
 ---
 
-## Level Completed
+### Level Completed
 ![Level Complete Output](assets/King.png)
 
 # Ethernaut Level 10: Re-entrancy
