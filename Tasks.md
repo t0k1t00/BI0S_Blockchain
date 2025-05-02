@@ -79,7 +79,7 @@ Now that I’m the owner, I can withdraw the contract’s balance and fulfill th
 
 ---
 
-### 4. Level completed
+### Level completed
 
 ![Level Complete Output](assets/Fallback.png)
 
@@ -113,8 +113,7 @@ To check that I successfully became the owner after calling `Fal1out()`.
 
 ---
 
-## Level completed
-
+### Level completed
 ![Level Complete Output](assets/Fallout.png)
 
 
