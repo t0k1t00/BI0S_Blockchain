@@ -1,4 +1,4 @@
-## Ethernaut Level 0: Hello Ethernaut
+# Ethernaut Level 0: Hello Ethernaut
 
 ## Commands Used
 
@@ -1430,7 +1430,7 @@ Successfully drained all of `token1` from the Dex by abusing the flawed swap pri
 ![Level Complete Output](assets/Dex.png)
 
 
-## Ethernaut Level 23: Dex Two 
+# Ethernaut Level 23: Dex Two 
 
 ### Strategy
 
@@ -1552,7 +1552,7 @@ Verify:
 ![Level Complete Output](assets/Dextwo.png)
 
 
-## Ethernaut Level 24: Puzzle Wallet
+# Ethernaut Level 24: Puzzle Wallet
 
 ### Strategy
 
