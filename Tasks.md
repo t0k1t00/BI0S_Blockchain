@@ -1570,9 +1570,7 @@ At this point, the player is the **admin** of the proxy, and they can control th
 ### Strategy
 
 This challenge exploits **custom error handling and `try/catch` mechanics in Solidity 0.8+**. 
-
 The key vulnerability lies in the `GoodSamaritan.requestDonation()` function, which **only triggers the full wallet drain (`transferRemainder`) if a specific error `NotEnoughBalance()` is thrown.**
-
 We can abuse this logic by **pretending to receive the donation**, and **reverting with the correct error signature (`NotEnoughBalance()`)** during the callback. This tricks the contract into calling `wallet.transferRemainder()` and draining the entire wallet into our contract.
 
 ---
@@ -1586,7 +1584,6 @@ catch (bytes memory err) {
     }
 }
 ```
-
 This code **blindly matches error messages** and doesn’t care *who* sent them. If we revert with the same error during a `notify()` callback, it will **assume the wallet is empty and transfer everything** to us.
 
 ---
@@ -1602,7 +1599,6 @@ This code **blindly matches error messages** and doesn’t care *who* sent them.
 ---
 
 #### 2. Deploy the Attack Contract
-
 ```solidity
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
@@ -1631,13 +1627,8 @@ contract Attack {
 
 ---
 
-#### 3. Execute the Attack
-
-In Remix or your console:
-
-```js
-await attack.pwn("INSTANCE_ADDRESS_HERE")
-```
+#### 2. Execute the Attack
+Call the pwn() function from that contract.
 
 This will:
 - Trigger `requestDonation()`
@@ -1646,12 +1637,6 @@ This will:
 - `notify()` reverts with `NotEnoughBalance()`
 - The error gets caught by the catch block
 - Wallet sends **all** its remaining balance to you!
-
-### Concepts Used
-- Custom Errors (`error NotEnoughBalance()`)
-- `try/catch` with `bytes memory err`
-- ABI error signature matching
-- ERC-20 token callback via `notify()`
 
 ---
 
@@ -1664,10 +1649,9 @@ This will:
 ### Strategy Overview
 
 The challenge has 3 gates to bypass:
-
-1. **Gate One**: I had to call `enter()` from a contract where `msg.sender == owner`, but `tx.origin != owner`.
-2. **Gate Two**: I needed to pass a password check that was based on `block.timestamp` at the time the `SimpleTrick` contract was deployed.
-3. **Gate Three**: I had to ensure the contract had more than 0.001 ether AND that `.send(0.001 ether)` to the `owner` failed — which happens if the owner is a contract with no `receive()` or `fallback`.
+1. **Gate One**: Had to call `enter()` from a contract where `msg.sender == owner`, but `tx.origin != owner`.
+2. **Gate Two**: Needed to pass a password check that was based on `block.timestamp` at the time the `SimpleTrick` contract was deployed.
+3. **Gate Three**: Had to ensure the contract had more than 0.001 ether AND that `.send(0.001 ether)` to the `owner` failed — which happens if the owner is a contract with no `receive()` or `fallback`.
 
 ---
 
@@ -1753,7 +1737,6 @@ So, the **challenge is to trick `onlyOff`** into thinking we're calling `turnSwi
 #### 1. Prepare custom crafted calldata
 
 The function we are calling is:
-
 ```solidity
 flipSwitch(bytes memory _data)
 ```
@@ -1772,7 +1755,6 @@ const bypass = '0x30c13ade000000000000000000000000000000000000000000000000000000
 #### 2. Send transaction with the bypass data
 
 I used browser console (via MetaMask and Web3) to send this raw transaction:
-
 ```js
 await ethereum.request({
   method: 'eth_sendTransaction',
@@ -1796,17 +1778,11 @@ await contract.switchOn(); // returns true
 
 ---
 
-### Final Notes
-
-This challenge was about **precise manipulation of calldata and function selectors**. It taught how Solidity's ABI encoding works under the hood and how raw bytecode can be used to **bypass superficial validation**.
-
 ### Level Completed
 ![Level Complete Output](assets/switch.png)
 
 
 # Ethernaut Level 30: **Higher Order**
-
----
 
 ### Strategy
 
@@ -1819,7 +1795,6 @@ The **loophole lies in the use of inline assembly** in `registerTreasury()`, whi
 ---
 
 ### Vulnerability Summary
-
 ```solidity
 assembly {
     sstore(treasury_slot, calldataload(4))
@@ -1882,8 +1857,6 @@ await contract.commander(); // returns your address
 
 # Ethernaut Level 32: **Impersonator**
 
----
-
 ### Strategy
 
 The goal is to **bypass ECDSA signature validation** and set the controller of the lock to anyone you want (e.g., `address(0)`), effectively compromising the lock system and allowing *anyone* to open the door.
@@ -1930,15 +1903,9 @@ To exploit the `Impersonator` contract, we first need to retrieve the **ECLocker
 
 - In the logs, under **Topic 1**, you'll find the address of the deployed `ECLocker`.
 
-For example, after deploying, you will see logs like:
-```plaintext
-topic[0]: 0x5c752bb3236b1cbcab285e75919a922aa3ab2723
-topic[1]: 0x6f79f29ac0f241abbde3b5fa17a8abf56419e9c4
-```
 Here, the **ECLocker** contract's address is `0x6f79f29ac0f241abbde3b5fa17a8abf56419e9c4`, which you will use in the next step.
 
 #### 2. Gather a known valid `(r, s, v)` signature
-
 This can be derived from a real controller transaction or found in the deployed instance.
 
 ```js
@@ -1951,14 +1918,12 @@ s = 0x78489c64a0db16c40ef986beccc8f069ad5041e5b992d76fe76bba057d9abff2;
 #### 3. Compute `new_s = n - s`
 
 Use secp256k1 curve order:
-
 ```solidity
 n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
 new_s = n - s;
 ```
 
 #### 4. Call `changeController` using the `(r, new_s, v)` signature
-
 ```solidity
 locker.changeController(v, r, bytes32(new_s), address(0));
 ```
@@ -1966,7 +1931,6 @@ locker.changeController(v, r, bytes32(new_s), address(0));
 This sets `controller = address(0)` (i.e., no controller).
 
 #### 5. Open the lock as any address
-
 Once `controller == address(0)`, anyone can pass the same (r, new_s, v) signature to call:
 
 ```solidity
@@ -2015,8 +1979,6 @@ contract Solution {
 
 
 # Ethernaut Level 33: **MagicAnimalCarousel**
-
----
 
 ### Strategy
 
