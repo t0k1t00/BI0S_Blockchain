@@ -478,7 +478,7 @@ I used this to confirm that my `KingAttack` contract had become the new king.
 
 ---
 
-### Prepared the `ReentranceAttack` Contract
+### 1. Prepared the `ReentranceAttack` Contract
 
 Created a new file called `ReentranceAttack.sol` in Remix and pasted the following code:
 
@@ -523,14 +523,14 @@ contract ReentranceAttack {
 
 ---
 
-### Compiled the Contract
+### 2. Compiled the Contract
 
 - I used Solidity compiler version `0.6.12` to match the version used by the level.
 - Clicked **Compile ReentranceAttack.sol**.
 
 ---
 
-### Deployed the Attack Contract
+### 3. Deployed the Attack Contract
 
 - Switched to **Injected Web3** in Remix (connected to Sepolia testnet via MetaMask).
 - Provided the **instance address of the Reentrance contract** as the constructor argument.
@@ -538,7 +538,7 @@ contract ReentranceAttack {
 
 ---
 
-### Executed the Attack
+### 4. Executed the Attack
 
 - Called the `attack()` function with `0.001 ETH`.
 - The attack recursively called `withdraw()` through the fallback `receive()` function, draining the contract balance.
@@ -551,7 +551,7 @@ Once the balance reached `0`, confirmed that the attack was successful.
 
 ---
 
-### Submitted the Level
+### 5. Submitted the Level
 
 - After confirming the contract’s balance was `0`, I submitted the level on Ethernaut — and it was marked complete.
 
@@ -571,6 +571,8 @@ Once the balance reached `0`, confirmed that the attack was successful.
   1. Implements the `Building` interface.
   2. Returns `false` on the first call to `isLastFloor()`, and `true` on the second call — using a toggle variable.
 - **Outcome**: This tricks the `Elevator` into thinking it's not on the last floor, then immediately believing it is — allowing me to set `top = true` and complete the level.
+
+### 1. Prepared a Contract
 
 ```solidity
 // SPDX-License-Identifier: MIT 
@@ -606,14 +608,14 @@ contract ElevatorHack is Building {
 
 ---
 
-### Compiled the Contract
+### 2. Compiled the Contract
 
 - I used the Solidity compiler version `^0.8.0` to match the challenge.
 - Clicked **Compile ElevatorHack.sol**.
 
 ---
 
-### Deployed the Hack Contract
+### 3. Deployed the Hack Contract
 
 - Switched Remix to **Injected Provider** (MetaMask on Sepolia).
 - Passed the instance address of the vulnerable `Elevator` contract into the constructor.
@@ -621,14 +623,14 @@ contract ElevatorHack is Building {
 
 ---
 
-### Triggered the Exploit
+### 4. Triggered the Exploit
 
 - Clicked the `attack()` function in the deployed `ElevatorHack` contract.
 - This called `goTo(1)` and toggled the return values of `isLastFloor()` to fake the logic and trick the contract.
 
 ---
 
-### Verified the Result
+### 5. Verified the Result
 
 In the browser console, I checked:
 ```js
@@ -653,7 +655,7 @@ This confirmed that the Elevator believed it had reached the top.
 
 ## Commands Used
 
-### Read the value in storage slot 5
+### 1. Read the value in storage slot 5
 ```js
 await web3.eth.getStorageAt(contract.address, 5)
 ```
@@ -661,7 +663,7 @@ await web3.eth.getStorageAt(contract.address, 5)
 
 ---
 
-### Extract the unlock key from the retrieved bytes32
+### 2. Extract the unlock key from the retrieved bytes32
 ```js
 let full = '0xe29b4ed9fbfba303b84c498c7a45d399f864637ae28408665a60ce4592daf628';
 let key = '0x' + full.slice(2, 34);
@@ -670,7 +672,7 @@ Took the first 16 bytes from the `bytes32` value (i.e., 32 hex characters) to fo
 
 ---
 
-### Unlock the contract
+### 3. Unlock the contract
 ```js
 await contract.unlock(key);
 ```
@@ -750,14 +752,13 @@ This executes the attack on the `GatekeeperOne` contract instance, attempting to
 ### 3. Confirm level completion
 ```js
 await contract.entrant()
+//Output: My wallet address (tx.origin)
 ```
-**Output**: My wallet address (tx.origin)
-
-If the value returned is the wallet address, then we've have successfully passed all gates and completed the level.
+The value returned is the wallet address, so we've have successfully passed all gates and completed the level.
 
 ---
 
-## Level Completed
+### Level Completed
 ![Level Complete Output](assets/gatekeeper1.png)
 
 
