@@ -480,7 +480,7 @@ I used this to confirm that my `KingAttack` contract had become the new king.
 
 ### Prepared the `ReentranceAttack` Contract
 
-I created a new file called `ReentranceAttack.sol` in Remix and pasted the following code:
+Created a new file called `ReentranceAttack.sol` in Remix and pasted the following code:
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -543,21 +543,21 @@ contract ReentranceAttack {
 - Called the `attack()` function with `0.001 ETH`.
 - The attack recursively called `withdraw()` through the fallback `receive()` function, draining the contract balance.
 
-To monitor the balance of the target contract, I ran:
+To monitor the balance of the target contract, ran:
 ```js
 (await web3.eth.getBalance(instance)).toString()
 ```
-Once the balance reached `0`, I confirmed the attack was successful.
+Once the balance reached `0`, confirmed that the attack was successful.
 
 ---
 
-### Step 6: Submitted the Level
+### Submitted the Level
 
 - After confirming the contract’s balance was `0`, I submitted the level on Ethernaut — and it was marked complete.
 
 ---
 
-## Level Completed
+### Level Completed
 ![Level Complete Output](assets/Re-entracy.png)
 ![Level Complete Output](assets/Re-entrancy(1).png)
 
@@ -567,7 +567,7 @@ Once the balance reached `0`, I confirmed the attack was successful.
 ## Strategy
 
 - **Vulnerability**: The `Elevator` contract relies on an external `Building` contract's `isLastFloor()` function, calling it **twice** — once in an `if` condition and again to set `top`. Since both calls are made separately, the return values don’t have to be the same, creating a logic loophole.
-- **Exploit**: I created a contract (`ElevatorHack`) that:
+- **Exploit**: Created a contract (`ElevatorHack`) that:
   1. Implements the `Building` interface.
   2. Returns `false` on the first call to `isLastFloor()`, and `true` on the second call — using a toggle variable.
 - **Outcome**: This tricks the `Elevator` into thinking it's not on the last floor, then immediately believing it is — allowing me to set `top = true` and complete the level.
@@ -633,14 +633,13 @@ contract ElevatorHack is Building {
 In the browser console, I checked:
 ```js
 await contract.top()
+//Output: `true`
 ```
-**→ Output**: `true`
-
 This confirmed that the Elevator believed it had reached the top.
 
 ---
 
-## Level Completed
+### Level Completed
 ![Level Complete Output](assets/Elevator.png)
 
 # Ethernaut Level 13: Privacy
@@ -654,7 +653,7 @@ This confirmed that the Elevator believed it had reached the top.
 
 ## Commands Used
 
-### 1. Read the value in storage slot 5
+### Read the value in storage slot 5
 ```js
 await web3.eth.getStorageAt(contract.address, 5)
 ```
@@ -662,16 +661,16 @@ await web3.eth.getStorageAt(contract.address, 5)
 
 ---
 
-### 2. Extract the unlock key from the retrieved bytes32
+### Extract the unlock key from the retrieved bytes32
 ```js
 let full = '0xe29b4ed9fbfba303b84c498c7a45d399f864637ae28408665a60ce4592daf628';
 let key = '0x' + full.slice(2, 34);
 ```
-I took the first 16 bytes from the `bytes32` value (i.e., 32 hex characters) to form the `bytes16` key required by the `unlock()` function.
+Took the first 16 bytes from the `bytes32` value (i.e., 32 hex characters) to form the `bytes16` key required by the `unlock()` function.
 
 ---
 
-### 3. Unlock the contract
+### Unlock the contract
 ```js
 await contract.unlock(key);
 ```
@@ -682,14 +681,13 @@ This call triggered the `unlock()` function and passed the correct key, changing
 ### 4. Confirm that the contract was unlocked
 ```js
 await contract.locked();
+//Output: `false`
 ```
-**Output**: `false`
-
 This confirmed that the level was successfully completed.
 
 ---
 
-## Level Completed
+### Level Completed
 ![Level Complete Output](assets/Privacy.png)
 
 
